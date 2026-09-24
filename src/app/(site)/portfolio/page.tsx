@@ -6,6 +6,7 @@ import { defaultPortfolio } from "@/lib/defaultData";
 import PortfolioGridClient, { ProjectCardData } from "@/app/components/Portfolio/PortfolioGridClient";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Portfolio & Case Studies | Appsica",

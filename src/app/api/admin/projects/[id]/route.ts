@@ -4,6 +4,7 @@ import connectDB from "@/lib/mongodb";
 import Project from "@/models/Project";
 import mongoose from "mongoose";
 import { deleteCloudinaryImageByUrl } from "@/lib/cloudinary";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -141,6 +142,10 @@ export async function PUT(
       })
     );
 
+    revalidatePath("/portfolio");
+    revalidatePath("/");
+    revalidatePath(`/portfolio/${project.slug}`);
+
     return NextResponse.json({ project });
   } catch (e: unknown) {
     const code = (e as { code?: number })?.code;
@@ -192,6 +197,9 @@ export async function DELETE(
         }
       })
     );
+
+    revalidatePath("/portfolio");
+    revalidatePath("/");
 
     return NextResponse.json({ ok: true });
   } catch (e) {

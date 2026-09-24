@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/requireAdmin";
 import connectDB from "@/lib/mongodb";
 import Project from "@/models/Project";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,9 @@ export async function POST(request: Request) {
       isDemo,
       order,
     });
+
+    revalidatePath("/portfolio");
+    revalidatePath("/");
 
     return NextResponse.json({ project });
   } catch (e: unknown) {
