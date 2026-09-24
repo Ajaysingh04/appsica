@@ -429,18 +429,10 @@ export async function POST(request: Request) {
     const smtpPass = (process.env.SMTP_PASS || "pxnwynsqkrnfqoqf").replace(/\s+/g, "");
     let mailSent = false;
 
-    // Send to both official HR/Admin address and all admin inboxes so Ajay receives real-time alerts
-    const allRecipients = Array.from(
-      new Set(
-        [
-          recipientEmail,
-          smtpUser,
-          "appsicadev1@gmail.com",
-          "ajaysinghbanafer1@gmail.com",
-          "ajayworkon04@gmail.com",
-        ].filter(Boolean)
-      )
-    );
+    // Strictly deliver to designated official email:
+    // - Careers -> hr@appsica.com
+    // - Contact / Quote -> contact@appsica.com
+    const targetEmail = recipientEmail;
 
     if (smtpHost && smtpUser && smtpPass) {
       try {
@@ -455,8 +447,10 @@ export async function POST(request: Request) {
         });
 
         const mailOptions: Record<string, any> = {
-          from: `"Appsica Technologies" <${smtpUser}>`,
-          to: allRecipients,
+          from: isCareer
+            ? `"Appsica Careers Desk" <${smtpUser}>`
+            : `"Appsica Contact Desk" <${smtpUser}>`,
+          to: targetEmail,
           replyTo: email,
           subject,
           html: htmlContent,
@@ -474,7 +468,7 @@ export async function POST(request: Request) {
 
         await transporter.sendMail(mailOptions);
         mailSent = true;
-        console.log(`[Nodemailer] Successfully sent email to ${allRecipients.join(", ")} via ${smtpUser}`);
+        console.log(`[Nodemailer] Successfully sent ${isCareer ? "Careers" : "Contact"} email to ${targetEmail}`);
       } catch (smtpErr) {
         console.error("SMTP Error sending email:", smtpErr);
       }
