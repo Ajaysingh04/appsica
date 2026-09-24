@@ -720,7 +720,7 @@ export const defaultPortfolio: IPortfolioItem[] = [
     title: "Staff Management System",
     slug: "staff-management",
     summary: "An enterprise employee and shift management platform with real-time attendance, roster planning, and automated leave tracking.",
-    liveLink: "https://staffmanage.app/employee/",
+    liveLink: "https://staffmanage.app/admin/",
   },
   {
     coverImage: "/images/Appsica-Food-Delivery.png",
