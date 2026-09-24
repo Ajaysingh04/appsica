@@ -2,7 +2,7 @@ import NotFound from "@/app/components/NotFound";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "404 Page | Saturn ",
+  title: "404 Page | Appsica",
 };
 
 const ErrorPage = () => {

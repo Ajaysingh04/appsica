@@ -81,7 +81,7 @@ const Features = () => {
               </div>
 
               {/* Floating SLA Badge */}
-              <div className="absolute -bottom-6 -right-4 sm:right-6 bg-slate-900/90 backdrop-blur-xl border border-sky-500/30 p-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-float-slow">
+              <div className="absolute -bottom-6 right-2 sm:right-6 bg-slate-900/90 backdrop-blur-xl border border-sky-500/30 p-3 sm:p-4 rounded-2xl shadow-2xl flex items-center gap-2.5 sm:gap-3 animate-float-slow max-w-[calc(100%-1rem)]">
                 <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
                   <Icon icon="solar:shield-check-bold" width="22" height="22" />
                 </div>

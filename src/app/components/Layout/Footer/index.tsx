@@ -310,7 +310,7 @@ const Footer: FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-slate-400">
+          <div className="flex flex-wrap justify-center sm:justify-end items-center gap-4 sm:gap-6 text-xs text-slate-400">
             <span className="inline-flex items-center gap-1.5 text-slate-400">
               <Icon icon="solar:shield-check-bold" width="14" height="14" className="text-sky-400" />
               SOC-2 Ready

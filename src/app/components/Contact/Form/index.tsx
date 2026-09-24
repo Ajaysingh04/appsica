@@ -69,13 +69,13 @@ const ContactForm = () => {
     }
   };
   return (
-    <section className=" pb-24 !pt-0">
-      <div className="container mx-auto lg:max-w-xl md:max-w-screen-md px-4">
-        <div className="grid md:grid-cols-12 grid-cols-1 gap-8">
-          <div className="col-span-6 md:pt-12 pt-0 relative">
-            <h2 className="max-w-72 text-[40px] leading-[3rem] font-bold mb-9">Get A Quote</h2>
+    <section className="pb-16 sm:pb-24 !pt-0">
+      <div className="container mx-auto lg:max-w-7xl md:max-w-screen-lg px-4 sm:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="md:col-span-7 col-span-1 md:pt-6 pt-0 relative">
+            <h2 className="text-3xl sm:text-4xl lg:text-[40px] leading-tight font-bold mb-6 text-slate-900">Get A Quote</h2>
             <form onSubmit={handleSubmit} className="flex flex-wrap w-full m-auto justify-between">
-              <div className="sm:flex gap-3 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div className="mx-0 my-2.5 flex-1">
                   <label
                     htmlFor="name"
@@ -109,7 +109,7 @@ const ContactForm = () => {
                   />
                 </div>
               </div>
-              <div className="sm:flex gap-3 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div className="mx-0 my-2.5 flex-1">
                   <label
                     htmlFor="email"
@@ -155,40 +155,41 @@ const ContactForm = () => {
                   </select>
                 </div>
               </div>
-              <div className="w-full">
+              <div className="w-full my-2.5">
                 <label
-                  htmlFor="password"
-                  className="text-base inline-block pb-4"
+                  htmlFor="message"
+                  className="text-base inline-block pb-3"
                 >
                   Message
                 </label>
                   <textarea
                     id='message'
                     name='message'
+                    rows={4}
                     value={formData.message}
                     onChange={handleChange}
-                    className='border border-border px-4 py-2 focus:outline-hidden bg-white rounded-lg focus:border-primary'
+                    className='w-full border border-border px-4 py-3 focus:outline-hidden bg-white rounded-lg focus:border-primary'
                     placeholder='Anything else you wanna communicate'
                   ></textarea>
               </div>
-              <div className="mx-0 my-2.5 w-full">
+              <div className="mx-0 my-4 w-full">
                 <button
                   type="submit"
                   disabled={!isFormValid || loader}
-                  className={`border leading-none px-6 text-lg font-medium py-4 rounded-lg ${!isFormValid || loader ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-primary border-primary text-white hover:bg-transparent hover:text-primary cursor-pointer'}`}
+                  className={`w-full sm:w-auto border leading-none px-8 text-lg font-medium py-4 rounded-xl ${!isFormValid || loader ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-primary border-primary text-white hover:bg-transparent hover:text-primary cursor-pointer transition-colors'}`}
                 >
                   Submit
                 </button>
               </div>
             </form>
             {showThanks && (
-              <div className="text-white bg-green-400 rounded-full px-4 text-lg mb-4.5 mt-2 absolute flex items-center gap-2">
+              <div className="text-white bg-green-500 rounded-xl px-5 py-3 text-base my-3 flex items-center gap-2">
                 Request submitted successfully. Thank you.
                 <div className="w-3 h-3 rounded-full animate-spin border-2 border-solid border-white border-t-transparent"></div>
               </div>
             )}
           </div>
-          <div className="col-span-6">
+          <div className="md:col-span-5 col-span-1 mt-6 md:mt-0">
             <Image
               src="/images/contact-page/contact.webp"
               alt="Contact"
@@ -196,7 +197,7 @@ const ContactForm = () => {
               height={0}
               quality={100}
               style={{ width: "100%", height: "auto" }}
-              className="rounded-lg"
+              className="rounded-2xl shadow-xl object-cover"
             />
           </div>
         </div>

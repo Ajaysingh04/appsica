@@ -104,13 +104,13 @@ const Hero: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
-              <span className="text-xs sm:text-sm font-semibold text-slate-200 tracking-wide uppercase">
+              <span className="text-[11px] sm:text-sm font-semibold text-slate-200 tracking-wide uppercase text-center">
                 {heroSettings.badge || "Next-Gen Software Engineering & Cloud Solutions"}
               </span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-white mb-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.12] tracking-tight max-w-5xl">
+            <h1 className="text-white mb-6 text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.15] tracking-tight max-w-5xl">
               {heroSettings.titlePrefix || "Empowering Your"}{" "}
               <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(56,189,248,0.3)]">
                 {heroSettings.titleHighlight || "Digital Transformation"}

@@ -24,11 +24,10 @@ const NotFound = () => {
             <div>
               <div className="mb-8">
                 <svg
-                  width="327"
-                  height="132"
                   viewBox="0 0 327 132"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
+                  className="w-full max-w-[327px] h-auto"
                 >
                   <mask
                     id="path-1-outside-1_2014_12631"
