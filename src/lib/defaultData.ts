@@ -747,12 +747,12 @@ export const defaultPortfolio: IPortfolioItem[] = [
     liveLink: "https://baazarpur.vercel.app/",
   },
   {
-    coverImage: "/images/quick-commerce.jpg",
-    image: "/images/quick-commerce.jpg",
-    title: "Quick Commerce Delivery Suite",
+    coverImage: "/uploads/1789810670858-rose-product-delivery-1.png",
+    image: "/uploads/1789810670858-rose-product-delivery-1.png",
+    title: "quick-commerce",
     slug: "quick-commerce",
     summary: "Ultra-fast hyper-local grocery and goods delivery platform with micro-fulfillment center logistics and live courier routing.",
-    liveLink: "",
+    liveLink: "https://quickcommerce.appsica.com/",
   },
   {
     coverImage: "/images/Bachat Book - Expense Tracker.jpg",
