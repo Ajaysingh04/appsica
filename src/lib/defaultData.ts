@@ -728,7 +728,7 @@ export const defaultPortfolio: IPortfolioItem[] = [
     title: "Food Delivery Application",
     slug: "food-delivery",
     summary: "A modern, full-stack food delivery application with seamless user experience, restaurant menus, cart checkout, and live order tracking.",
-    liveLink: "https://food-delivery-two-taupe.vercel.app/",
+    liveLink: "https://food.appsica.com/",
   },
   {
     coverImage: "/images/edjucator.in.jpg",
