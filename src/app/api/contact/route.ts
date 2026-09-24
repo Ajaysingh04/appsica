@@ -36,7 +36,13 @@ export async function POST(request: Request) {
       Boolean(role && experience) ||
       Boolean(skills && resumeUrl);
 
-    if (!name || !email || !message) {
+    const effectiveMessage =
+      message ||
+      (isCareer
+        ? `Application submitted for role: ${role || "Candidate"}. Skills: ${skills || "N/A"}`
+        : "");
+
+    if (!name || !email || !effectiveMessage) {
       return NextResponse.json(
         { success: false, error: "Name, email, and message are required." },
         { status: 400 }
@@ -51,8 +57,8 @@ export async function POST(request: Request) {
         email,
         phone,
         message: isCareer
-          ? `[Skills: ${skills || "Not specified"}]\n\n[Resume: ${resumeUrl || (resumeAttachment ? `Attached: ${resumeAttachment.filename}` : "Not provided")}]\n\n${message}`
-          : message,
+          ? `[Skills: ${skills || "Not specified"}]\n\n[Resume: ${resumeUrl || (resumeAttachment ? `Attached: ${resumeAttachment.filename}` : "Not provided")}]\n\n${effectiveMessage}`
+          : effectiveMessage,
         source: isCareer ? "career-application" : source,
         projectName: isCareer ? `Role: ${role || "General"} | Skills: ${skills || "N/A"}` : projectName,
         project: isCareer ? `Resume: ${resumeUrl || (resumeAttachment ? "Attached" : "N/A")} | Portfolio: ${portfolioUrl} | LinkedIn: ${linkedinUrl}` : project,
@@ -70,7 +76,7 @@ export async function POST(request: Request) {
           resumeAttachment: resumeAttachment
             ? { filename: resumeAttachment.filename, content: resumeAttachment.content }
             : undefined,
-          message,
+          message: effectiveMessage,
           status: "new",
         });
       }
@@ -423,9 +429,17 @@ export async function POST(request: Request) {
     const smtpPass = (process.env.SMTP_PASS || "pxnwynsqkrnfqoqf").replace(/\s+/g, "");
     let mailSent = false;
 
-    // Send to both official HR/Admin address and admin Gmail inbox
+    // Send to both official HR/Admin address and all admin inboxes so Ajay receives real-time alerts
     const allRecipients = Array.from(
-      new Set([recipientEmail, smtpUser, "appsicadev1@gmail.com"].filter(Boolean))
+      new Set(
+        [
+          recipientEmail,
+          smtpUser,
+          "appsicadev1@gmail.com",
+          "ajaysinghbanafer1@gmail.com",
+          "ajayworkon04@gmail.com",
+        ].filter(Boolean)
+      )
     );
 
     if (smtpHost && smtpUser && smtpPass) {
