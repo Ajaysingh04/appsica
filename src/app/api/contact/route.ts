@@ -417,11 +417,16 @@ export async function POST(request: Request) {
 </html>
 `;
 
-    // 2. Option A: Custom SMTP (Hostinger / cPanel / Zoho / Google Workspace)
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS?.replace(/\s+/g, "");
+    // 2. Option A: Custom SMTP (Hostinger / cPanel / Zoho / Google Workspace / Gmail)
+    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+    const smtpUser = process.env.SMTP_USER || "appsicadev1@gmail.com";
+    const smtpPass = (process.env.SMTP_PASS || "pxnwynsqkrnfqoqf").replace(/\s+/g, "");
     let mailSent = false;
+
+    // Send to both official HR/Admin address and admin Gmail inbox
+    const allRecipients = Array.from(
+      new Set([recipientEmail, smtpUser, "appsicadev1@gmail.com"].filter(Boolean))
+    );
 
     if (smtpHost && smtpUser && smtpPass) {
       try {
@@ -437,7 +442,7 @@ export async function POST(request: Request) {
 
         const mailOptions: Record<string, any> = {
           from: `"Appsica Technologies" <${smtpUser}>`,
-          to: recipientEmail,
+          to: allRecipients,
           replyTo: email,
           subject,
           html: htmlContent,
@@ -455,7 +460,7 @@ export async function POST(request: Request) {
 
         await transporter.sendMail(mailOptions);
         mailSent = true;
-        console.log(`[Nodemailer] Successfully sent email to ${recipientEmail} via ${smtpUser}`);
+        console.log(`[Nodemailer] Successfully sent email to ${allRecipients.join(", ")} via ${smtpUser}`);
       } catch (smtpErr) {
         console.error("SMTP Error sending email:", smtpErr);
       }
