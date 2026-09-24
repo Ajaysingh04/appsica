@@ -7,6 +7,7 @@ const BlogSchema = new Schema(
     excerpt: { type: String, default: "" },
     content: { type: String, default: "" },
     coverImage: { type: String, required: true },
+    category: { type: String, default: "Web Development", trim: true },
     published: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     await connectDB();
     let query = Blog.find({ published: true })
       .sort({ order: 1, createdAt: -1 })
-      .select("title slug excerpt coverImage createdAt");
+      .select("title slug excerpt coverImage category createdAt");
 
     if (limitParam > 0) {
       query = query.limit(limitParam);

@@ -43,7 +43,6 @@ export default function BlogsGrid({ selectedCategory = "All Articles", searchQue
 
       // Fallback to professional dummy blogs
       const fallbackList = professionalDummyBlogs.map((b, idx) => {
-        const cats = ["Cloud & DevOps", "Web Development", "Mobile Apps", "Cloud & DevOps", "UI/UX Design"];
         return {
           _id: `dummy-${idx}`,
           title: b.title,
@@ -51,7 +50,7 @@ export default function BlogsGrid({ selectedCategory = "All Articles", searchQue
           excerpt: b.excerpt || "",
           coverImage: b.coverImage,
           date: b.createdAt,
-          category: cats[idx % cats.length],
+          category: (b as any).category || "Web Development",
         };
       });
       setBlogs(fallbackList);
@@ -63,13 +62,17 @@ export default function BlogsGrid({ selectedCategory = "All Articles", searchQue
 
   const filteredBlogs = useMemo(() => {
     return blogs.filter((blog) => {
+      const cat = (blog.category || "").toLowerCase();
+      const sel = selectedCategory.toLowerCase();
+
       const matchesCategory =
         selectedCategory === "All Articles" ||
-        blog.category?.toLowerCase() === selectedCategory.toLowerCase() ||
-        (selectedCategory === "Web Development" && blog.category?.includes("Web")) ||
-        (selectedCategory === "Cloud & DevOps" && (blog.category?.includes("Cloud") || blog.category?.includes("DevOps"))) ||
-        (selectedCategory === "Mobile Apps" && blog.category?.includes("Mobile")) ||
-        (selectedCategory === "UI/UX Design" && blog.category?.includes("UI/UX"));
+        cat === sel ||
+        (sel.includes("web") && cat.includes("web")) ||
+        (sel.includes("cloud") && (cat.includes("cloud") || cat.includes("devops"))) ||
+        (sel.includes("mobile") && (cat.includes("mobile") || cat.includes("app"))) ||
+        ((sel.includes("ui") || sel.includes("ux") || sel.includes("design")) &&
+          (cat.includes("ui") || cat.includes("ux") || cat.includes("design")));
 
       const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
