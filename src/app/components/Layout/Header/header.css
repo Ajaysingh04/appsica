@@ -1,0 +1,29 @@
+/* header.css */
+.header {
+  overflow: visible;
+  position: relative;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+  }
+}
+
+.logo-3d-shimmer {
+  animation: shimmer 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Header link animation */
+.header-link {
+  display: inline-block;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.header-link:hover {
+  transform: translateY(-2px);
+  color: #0052cc;
+}
