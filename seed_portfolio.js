@@ -28,6 +28,15 @@ const Project = mongoose.models.Project || mongoose.model("Project", ProjectSche
 
 const hardcodedProjects = [
   {
+    title: "Helper Service provider",
+    slug: "helper-service-provider",
+    summary: "Comprehensive helper and service provider platform connecting users with trusted local service professionals.",
+    coverImage: "/uploads/1791007941937-gemini-generated-image-dxq04fdxq04fdxq0.png",
+    liveLink: "https://helper-platform-azure.vercel.app/",
+    published: true,
+    order: 1
+  },
+  {
     title: "Food Delivery Application",
     slug: "food-delivery",
     summary: "A modern, full-stack food delivery application with seamless user experience, real-time order tracking, and intuitive navigation.",
