@@ -26,10 +26,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const cloudName =
-      process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const rawCloudName =
+      process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
+    const rawApiKey = process.env.CLOUDINARY_API_KEY || "";
+    const rawApiSecret = process.env.CLOUDINARY_API_SECRET || "";
+
+    const cloudName = rawCloudName.trim().replace(/^["']|["']$/g, "");
+    const apiKey = rawApiKey.trim().replace(/^["']|["']$/g, "");
+    const apiSecret = rawApiSecret.trim().replace(/^["']|["']$/g, "");
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -39,17 +43,35 @@ export async function POST(request: Request) {
         const base64 = buffer.toString("base64");
         const dataUri = `data:${file.type || "image/jpeg"};base64,${base64}`;
 
-        process.env.CLOUDINARY_CLOUD_NAME = cloudName;
         configureCloudinary();
         const result = await cloudinary.uploader.upload(dataUri, {
           folder: "agency-portfolio",
           resource_type: "auto",
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret,
         });
 
         return NextResponse.json({ url: result.secure_url });
       } catch (cloudErr: unknown) {
         console.error("Cloudinary upload failed:", cloudErr);
-        const errMsg = cloudErr instanceof Error ? cloudErr.message : String(cloudErr);
+
+        let errMsg = "Upload failed";
+        if (cloudErr && typeof cloudErr === "object") {
+          const ce = cloudErr as Record<string, unknown>;
+          if (typeof ce.message === "string") {
+            errMsg = ce.message;
+          } else if (ce.error && typeof (ce.error as { message?: string }).message === "string") {
+            errMsg = (ce.error as { message: string }).message;
+          } else if (typeof ce.error === "string") {
+            errMsg = ce.error;
+          } else {
+            errMsg = JSON.stringify(cloudErr);
+          }
+        } else if (typeof cloudErr === "string") {
+          errMsg = cloudErr;
+        }
+
         // On serverless or production, local disk write will fail with EROFS. Return the error directly.
         if (process.env.VERCEL || process.env.NODE_ENV === "production" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
           return NextResponse.json(

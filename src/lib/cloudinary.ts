@@ -1,12 +1,19 @@
 import { v2 as cloudinary } from "cloudinary";
 
 export function configureCloudinary() {
-  const cloudName =
-    process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const rawCloudName =
+    process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
+  const rawApiKey = process.env.CLOUDINARY_API_KEY || "";
+  const rawApiSecret = process.env.CLOUDINARY_API_SECRET || "";
+
+  const cloud_name = rawCloudName.trim().replace(/^["']|["']$/g, "");
+  const api_key = rawApiKey.trim().replace(/^["']|["']$/g, "");
+  const api_secret = rawApiSecret.trim().replace(/^["']|["']$/g, "");
+
   cloudinary.config({
-    cloud_name: cloudName,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name,
+    api_key,
+    api_secret,
     secure: true,
   });
 }
