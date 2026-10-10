@@ -47,26 +47,66 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json({ url: result.secure_url });
-      } catch (cloudErr) {
-        console.warn("Cloudinary upload failed, falling back to local storage:", cloudErr);
+      } catch (cloudErr: unknown) {
+        console.error("Cloudinary upload failed:", cloudErr);
+        const errMsg = cloudErr instanceof Error ? cloudErr.message : String(cloudErr);
+        // On serverless or production, local disk write will fail with EROFS. Return the error directly.
+        if (process.env.VERCEL || process.env.NODE_ENV === "production" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+          return NextResponse.json(
+            { error: `Cloudinary upload failed: ${errMsg}` },
+            { status: 502 }
+          );
+        }
       }
     }
 
-    // 2. Local public/uploads fallback (guaranteed to work)
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // 2. If running on Vercel/production and Cloudinary is missing or failed:
+    if (process.env.VERCEL || process.env.NODE_ENV === "production" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      const missingKeys: string[] = [];
+      if (!cloudName) missingKeys.push("CLOUDINARY_CLOUD_NAME");
+      if (!apiKey) missingKeys.push("CLOUDINARY_API_KEY");
+      if (!apiSecret) missingKeys.push("CLOUDINARY_API_SECRET");
+
+      return NextResponse.json(
+        {
+          error: `Cloudinary environment variables missing: ${missingKeys.join(", ")}. Vercel serverless environment is read-only and requires Cloudinary. Please add these in Vercel Settings > Environment Variables.`,
+        },
+        { status: 400 }
+      );
     }
 
-    const cleanName = (file.name || "image")
-      .toLowerCase()
-      .replace(/[^a-z0-9.]/g, "-");
-    const uniqueName = `${Date.now()}-${cleanName}`;
-    const filePath = path.join(uploadsDir, uniqueName);
+    // 3. Local public/uploads fallback (only for local development)
+    try {
+      const uploadsDir = path.join(process.cwd(), "public", "uploads");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
 
-    fs.writeFileSync(filePath, buffer);
+      const cleanName = (file.name || "image")
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, "-");
+      const uniqueName = `${Date.now()}-${cleanName}`;
+      const filePath = path.join(uploadsDir, uniqueName);
 
-    return NextResponse.json({ url: `/uploads/${uniqueName}` });
+      fs.writeFileSync(filePath, buffer);
+
+      return NextResponse.json({ url: `/uploads/${uniqueName}` });
+    } catch (writeErr: unknown) {
+      const isErofs =
+        writeErr instanceof Error &&
+        ((writeErr as { code?: string }).code === "EROFS" ||
+          writeErr.message.includes("EROFS"));
+      if (isErofs) {
+        return NextResponse.json(
+          {
+            error:
+              "Read-only filesystem detected. Please configure Cloudinary (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) for file uploads.",
+          },
+          { status: 500 }
+        );
+      }
+      throw writeErr;
+    }
   } catch (e: unknown) {
     console.error("Upload error:", e);
     const message = e instanceof Error ? e.message : "Upload failed.";
