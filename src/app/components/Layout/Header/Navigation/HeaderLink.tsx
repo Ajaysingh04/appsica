@@ -27,7 +27,7 @@ const HeaderLink: React.FC<{ item: HeaderItem; className?: string }> = ({ item, 
     >
       <Link
         href={item.href}
-        className={`text-[15px] flex items-center gap-1.5 font-semibold px-3 py-1.5 rounded-full transition-all duration-200 ${
+        className={`text-[13.5px] xl:text-[14.5px] 2xl:text-[15px] whitespace-nowrap flex items-center gap-1.5 font-semibold px-2.5 xl:px-3 py-1.5 rounded-full transition-all duration-200 ${
           item.href === path || (path.startsWith(`/${item.label.toLowerCase()}`) && item.href !== "/")
             ? "text-blue-600 bg-blue-50/80 font-bold"
             : "text-slate-700 hover:text-blue-600 hover:bg-slate-100/70"

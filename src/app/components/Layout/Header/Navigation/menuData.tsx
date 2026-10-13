@@ -27,5 +27,6 @@ export const getHeaderData = (services: ServiceMenuItem[] = []): HeaderItem[] =>
     { label: "Blogs", href: "/blogs" },
     { label: "Careers", href: "/careers" },
     { label: "Contact", href: "/contact" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
   ];
 };

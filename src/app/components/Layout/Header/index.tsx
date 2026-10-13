@@ -72,7 +72,7 @@ const Header: React.FC = () => {
       >
         <div className="container mx-auto lg:max-w-7xl flex items-center justify-between gap-6 px-4 sm:px-6 transition-all duration-300">
           <Logo />
-          <ul className="hidden lg:flex items-center justify-center gap-8 xl:gap-10">
+          <ul className="hidden lg:flex items-center justify-center gap-3 xl:gap-5 2xl:gap-7">
             {headerData.map((item, index) => (
               <HeaderLink key={index} item={item} className="header-link" />
             ))}

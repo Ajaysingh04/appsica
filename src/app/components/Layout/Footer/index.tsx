@@ -215,6 +215,7 @@ const Footer: FC = () => {
                   { name: "Our Portfolio", href: "/portfolio" },
                   { name: "All Capabilities", href: "/services" },
                   { name: "Blogs & Insights", href: "/blogs" },
+                  { name: "Privacy Policy", href: "/privacy-policy" },
                   { name: "Contact Us", href: "/contact" },
                 ].map((link, idx) => (
                   <li key={idx}>
@@ -315,6 +316,9 @@ const Footer: FC = () => {
               <Icon icon="solar:shield-check-bold" width="14" height="14" className="text-sky-400" />
               SOC-2 Ready
             </span>
+            <Link href="/privacy-policy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
             <Link href="/contact" className="hover:text-white transition-colors">
               Technical Support
             </Link>
