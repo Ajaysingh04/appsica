@@ -145,23 +145,24 @@ export default function TechForm({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-slate-700">Category Name *</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Category Name *</label>
           <input
+            type="text"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="e.g. Frontend Technologies, AI & Machine Learning, Cloud DevOps"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             required
           />
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-700">Sort Order</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Sort Order</label>
           <input
             type="number"
             value={order}
             onChange={(e) => setOrder(Number(e.target.value) || 0)}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
       </div>
@@ -211,16 +212,18 @@ export default function TechForm({
                 <Icon icon={item.icon || "logos:react"} width={22} height={22} />
               </div>
               <input
+                type="text"
                 placeholder="Name (e.g. Next.js)"
                 value={item.name}
                 onChange={(e) => handleItemChange(idx, "name", e.target.value)}
-                className="w-1/3 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm"
+                className="admin-input w-1/3 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 placeholder:text-slate-400"
               />
               <input
+                type="text"
                 placeholder="Iconify Tag (e.g. logos:nextjs-icon)"
                 value={item.icon}
                 onChange={(e) => handleItemChange(idx, "icon", e.target.value)}
-                className="flex-1 rounded border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 font-mono"
+                className="admin-input flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 font-mono placeholder:text-slate-400"
               />
               <button
                 type="button"

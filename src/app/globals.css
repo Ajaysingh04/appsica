@@ -101,12 +101,10 @@
   }
 
   textarea,
-  input[type="text"],
-  input[type="number"],
-  input[type="email"],
-  input[type="tel"],
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]),
   select {
-    @apply block outline-hidden text-base font-normal text-midnight_text m-0 rounded-lg w-full placeholder:text-[#668199];
+    @apply block outline-hidden text-sm font-medium text-slate-900 m-0 rounded-lg w-full placeholder:text-slate-400;
+    color: #0f172a;
   }
 
   h1 {
@@ -234,4 +232,60 @@ section {
 
 .blog-details ul li a {
   @apply hover:text-primary
+}
+
+/* Modern Admin Dashboard Animations & Utilities */
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes adminModalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes adminBackdropFade {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(6px);
+  }
+}
+
+.animate-admin-fade {
+  animation: adminFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-admin-modal {
+  animation: adminModalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-admin-backdrop {
+  animation: adminBackdropFade 0.2s ease-out forwards;
+}
+
+/* Ensure admin inputs are always high-contrast dark text */
+.admin-input {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+
+.admin-input::placeholder {
+  color: #94a3b8 !important;
 }

@@ -212,54 +212,58 @@ export default function ProjectForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-slate-700">Project Title *</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Project Title *</label>
           <input
+            type="text"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
               if (!slugTouched) setSlug(slugify(e.target.value));
             }}
             placeholder="e.g. Modern E-Commerce Platform"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             required
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-slate-700">URL Slug</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">URL Slug</label>
           <input
+            type="text"
             value={slug}
             onChange={(e) => {
               setSlugTouched(true);
               setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"));
             }}
             placeholder="auto-generated from title"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-slate-700">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Live Project Demo Link (Optional)
           </label>
           <input
+            type="text"
             value={liveLink}
             onChange={(e) => setLiveLink(e.target.value)}
             placeholder="https://your-project.com"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-slate-700">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Short Summary (For cards)
           </label>
           <input
+            type="text"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             placeholder="A scalable multi-vendor eCommerce app with Next.js and Stripe"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-semibold text-slate-700">
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Full Description
           </label>
           <textarea
@@ -267,7 +271,7 @@ export default function ProjectForm({
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
             placeholder="Detailed overview of the project, problem solved, architecture, and impact..."
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
       </div>
@@ -311,12 +315,12 @@ export default function ProjectForm({
             value={customImageUrl}
             onChange={(e) => setCustomImageUrl(e.target.value)}
             placeholder="Or paste direct image URL (https://...)"
-            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+            className="admin-input flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15"
           />
           <button
             type="button"
             onClick={handleAddImageUrl}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
           >
             Add URL
           </button>
@@ -376,19 +380,20 @@ export default function ProjectForm({
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold text-slate-700">Key Features</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Key Features</label>
           <button
             type="button"
             onClick={() => setFeatures((f) => [...f, { title: "", description: "" }])}
-            className="text-xs font-semibold text-primary hover:underline"
+            className="text-xs font-bold text-blue-600 hover:underline"
           >
             + Add Feature
           </button>
         </div>
         <div className="space-y-3">
           {features.map((f, i) => (
-            <div key={i} className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50/30 p-3">
+            <div key={i} className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
               <input
+                type="text"
                 placeholder="Feature title"
                 value={f.title}
                 onChange={(e) => {
@@ -396,9 +401,10 @@ export default function ProjectForm({
                   next[i] = { ...next[i], title: e.target.value };
                   setFeatures(next);
                 }}
-                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="admin-input w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20"
               />
               <input
+                type="text"
                 placeholder="Description (optional)"
                 value={f.description}
                 onChange={(e) => {
@@ -406,7 +412,7 @@ export default function ProjectForm({
                   next[i] = { ...next[i], description: e.target.value };
                   setFeatures(next);
                 }}
-                className="w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="admin-input w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           ))}
@@ -414,14 +420,15 @@ export default function ProjectForm({
       </div>
 
       <div>
-        <label className="text-xs font-semibold text-slate-700">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
           Tech stack (comma-separated)
         </label>
         <input
+          type="text"
           value={techStackRaw}
           onChange={(e) => setTechStackRaw(e.target.value)}
           placeholder="Next.js, MongoDB, Tailwind CSS, Stripe"
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+          className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
         />
       </div>
 

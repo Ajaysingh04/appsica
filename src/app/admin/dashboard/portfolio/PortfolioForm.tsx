@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
+import { Icon } from "@iconify/react";
 import { MAX_ADMIN_IMAGE_BYTES, formatMaxImageSizeLabel } from "@/lib/adminUploadLimits";
 
 export type PortfolioFormInitial = {
@@ -45,7 +46,11 @@ export default function PortfolioForm({
   const [coverImage, setCoverImage] = useState(initial?.coverImage ?? "");
   const [published, setPublished] = useState(initial?.published ?? true);
   const [isDemo, setIsDemo] = useState(initial?.isDemo ?? false);
-  const [order, setOrder] = useState(initial?.order !== undefined && initial?.order !== null && initial?.order > 0 ? Number(initial.order) : 1);
+  const [order, setOrder] = useState(
+    initial?.order !== undefined && initial?.order !== null && initial?.order > 0
+      ? Number(initial.order)
+      : 1
+  );
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -130,66 +135,114 @@ export default function PortfolioForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6 pb-8">
+    <form onSubmit={handleSubmit} className="space-y-6 text-slate-900 pb-2">
       {message && (
         <div
-          className={
+          className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold shadow-xs animate-admin-fade ${
             message.type === "ok"
-              ? "rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
-              : "rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
-          }
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border border-red-200 bg-red-50 text-red-800"
+          }`}
         >
-          {message.text}
+          <Icon
+            icon={message.type === "ok" ? "solar:check-circle-bold" : "solar:danger-circle-bold"}
+            width={20}
+            height={20}
+            className={message.type === "ok" ? "text-emerald-600 shrink-0" : "text-red-500 shrink-0"}
+          />
+          <span>{message.text}</span>
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">Title</label>
+      <div className="space-y-4">
+        {/* Title */}
+        <div>
+          <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+            <Icon icon="solar:pen-bold-duotone" width={15} height={15} className="text-blue-600" />
+            <span>Project Title *</span>
+          </label>
           <input
+            type="text"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
               if (!slugTouched) setSlug(slugify(e.target.value));
             }}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            placeholder="e.g. Modern E-Commerce Platform"
+            className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             required
           />
         </div>
-        <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">URL slug</label>
-          <input
-            value={slug}
-            onChange={(e) => {
-              setSlugTouched(true);
-              setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"));
-            }}
-            placeholder="auto from title"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          />
+
+        {/* URL Slug */}
+        <div>
+          <label className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
+            <span className="flex items-center gap-1.5">
+              <Icon icon="solar:link-bold-duotone" width={15} height={15} className="text-blue-600" />
+              <span>URL Slug</span>
+            </span>
+            <span className="text-[11px] font-normal normal-case text-slate-500">
+              Auto-generated or custom
+            </span>
+          </label>
+          <div className="relative mt-1.5">
+            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-semibold text-slate-400">
+              /portfolio/
+            </span>
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"));
+              }}
+              placeholder="project-slug"
+              className="admin-input w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-24 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
+            />
+          </div>
         </div>
-        <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">Summary</label>
+
+        {/* Summary */}
+        <div>
+          <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+            <Icon icon="solar:notes-bold-duotone" width={15} height={15} className="text-blue-600" />
+            <span>Summary & Description</span>
+          </label>
           <textarea
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             rows={3}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            placeholder="A brief overview of the project, features, client impact, or technologies used..."
+            className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
-        <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">Live Link (Optional URL)</label>
+
+        {/* Live Link */}
+        <div>
+          <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+            <Icon icon="solar:link-circle-bold-duotone" width={15} height={15} className="text-blue-600" />
+            <span>Live Project URL (Optional)</span>
+          </label>
           <input
+            type="text"
             value={liveLink}
             onChange={(e) => setLiveLink(e.target.value)}
-            placeholder="https://..."
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            placeholder="https://example.com"
+            className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
       </div>
 
-      <div>
-        <label className="text-xs font-medium text-slate-700">Cover image</label>
+      {/* Cover Image Section */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+        <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+          <Icon icon="solar:gallery-upload-bold-duotone" width={16} height={16} className="text-blue-600" />
+          <span>Cover Image *</span>
+        </label>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Upload a high resolution banner or mockup (PNG, JPG, WebP under {formatMaxImageSizeLabel()}).
+        </p>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -201,66 +254,110 @@ export default function PortfolioForm({
             e.target.value = "";
           }}
         />
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <button
             type="button"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-600/20 transition-all duration-150 hover:bg-blue-700 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
-            {coverImage ? "Replace cover image" : "Upload cover image"}
+            <Icon icon="solar:upload-track-2-bold" width={16} height={16} />
+            <span>{coverImage ? "Change Cover Image" : "Upload Cover Image"}</span>
           </button>
-          {uploading && <span className="text-xs text-slate-500">Uploading…</span>}
+          {uploading && (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600">
+              <Icon icon="eos-icons:loading" width={16} height={16} className="animate-spin" />
+              <span>Uploading to Cloudinary…</span>
+            </span>
+          )}
         </div>
+
         {coverImage && (
-          <div className="relative mt-4 h-28 w-44 overflow-hidden rounded-lg border border-slate-200">
-            <Image src={coverImage} alt="" fill className="object-cover" sizes="176px" />
+          <div className="group relative mt-4 h-36 w-60 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-md transition-transform hover:scale-[1.01]">
+            <Image src={coverImage} alt="Cover preview" fill className="object-cover" sizes="240px" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="rounded-md bg-white/90 px-2 py-1 text-[11px] font-bold text-slate-800 shadow">
+                Preview
+              </span>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3">
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+      {/* Visibility & Display Settings Card */}
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 space-y-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          Visibility & Display Position
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {/* Live Website Toggle Card */}
+          <label
+            className={`flex items-start gap-3 rounded-xl border p-3.5 transition-all cursor-pointer ${
+              published
+                ? "border-emerald-300 bg-emerald-50/60 shadow-xs"
+                : "border-slate-200 bg-white"
+            }`}
+          >
             <input
               type="checkbox"
               checked={published}
               onChange={(e) => setPublished(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            Published on website (Visible to visitors)
+            <div>
+              <p className="text-xs font-bold text-slate-900">Published Live</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Visible to visitors on live portfolio & case studies.
+              </p>
+            </div>
           </label>
-          <label className="flex items-center gap-2 text-sm font-medium text-amber-900 cursor-pointer">
+
+          {/* Demo Template Toggle Card */}
+          <label
+            className={`flex items-start gap-3 rounded-xl border p-3.5 transition-all cursor-pointer ${
+              isDemo
+                ? "border-amber-300 bg-amber-50/70 shadow-xs"
+                : "border-slate-200 bg-white"
+            }`}
+          >
             <input
               type="checkbox"
               checked={isDemo}
               onChange={(e) => setIsDemo(e.target.checked)}
-              className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+              className="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
             />
-            Demo Template (Hidden from public website)
+            <div>
+              <p className="text-xs font-bold text-amber-900">Demo Template Only</p>
+              <p className="text-[11px] text-amber-700/80 mt-0.5">
+                Admin mockup. Hidden from visitors on public site.
+              </p>
+            </div>
           </label>
         </div>
 
+        {/* Position Selector */}
         <div className="border-t border-slate-200 pt-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <span>Display Position (Order)</span>
-                <span className="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800">
-                  {order <= 1 ? "#1 (Top)" : `#${order}`}
+                <span>Display Order Position</span>
+                <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                  {order <= 1 ? "Rank #1 (Featured Top)" : `Rank #${order}`}
                 </span>
               </label>
               <p className="mt-0.5 text-[11px] text-slate-500">
-                Position 1 displays first on the website, followed by Position 2, Position 3, etc.
+                Determines sort order on the public website showcase.
               </p>
             </div>
 
             <select
               value={order || 1}
               onChange={(e) => setOrder(Number(e.target.value))}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer sm:w-52"
+              className="admin-input rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer sm:w-56"
             >
-              <option value={1}>1st - Position 1 (Top)</option>
+              <option value={1}>1st - Position 1 (Top Hero)</option>
               <option value={2}>2nd - Position 2</option>
               <option value={3}>3rd - Position 3</option>
               <option value={4}>4th - Position 4</option>
@@ -280,37 +377,53 @@ export default function PortfolioForm({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-6">
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
-        >
-          {saving ? "Saving…" : projectId ? "Update project" : "Create project"}
-        </button>
-        {onClose && (
+      {/* Action Footer Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+        <div className="flex items-center gap-2.5">
           <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/25 transition-all duration-150 hover:from-blue-700 hover:to-indigo-700 active:scale-95 disabled:opacity-60 cursor-pointer"
           >
-            Cancel
+            {saving ? (
+              <>
+                <Icon icon="eos-icons:loading" width={18} height={18} className="animate-spin" />
+                <span>Saving…</span>
+              </>
+            ) : (
+              <>
+                <Icon icon="solar:check-square-bold" width={18} height={18} />
+                <span>{projectId ? "Update Project" : "Create Project"}</span>
+              </>
+            )}
           </button>
-        )}
+
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs transition-all duration-150 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
         {projectId && (
           <button
             type="button"
             onClick={async () => {
-              if (!confirm("Delete this project permanently?")) return;
+              if (!confirm("Are you sure you want to delete this project permanently?")) return;
               const res = await fetch(`/api/admin/portfolio/${projectId}`, { method: "DELETE" });
               if (res.ok) {
                 await onSaved?.();
                 if (!onSaved) router.push("/admin/dashboard/portfolio");
               }
             }}
-            className="rounded-lg border border-red-200 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-2.5 text-xs font-bold text-red-600 transition-all duration-150 hover:bg-red-100 cursor-pointer active:scale-95"
           >
-            Delete
+            <Icon icon="solar:trash-bin-trash-bold" width={16} height={16} />
+            <span>Delete Project</span>
           </button>
         )}
       </div>

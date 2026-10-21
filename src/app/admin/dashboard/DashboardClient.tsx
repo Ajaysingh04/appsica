@@ -408,30 +408,45 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
 
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs animate-admin-backdrop"
           role="dialog"
           aria-modal="true"
           aria-labelledby="project-modal-title"
           onClick={closeModal}
         >
           <div
-            className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-200 animate-admin-modal text-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
-              <h2 id="project-modal-title" className="text-lg font-bold text-slate-900">
-                {modalMode === "new" ? "New project" : "Edit project"}
-              </h2>
+            <div className="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-6 py-4.5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Icon
+                    icon={modalMode === "new" ? "solar:add-circle-bold-duotone" : "solar:pen-new-square-bold-duotone"}
+                    width={22}
+                    height={22}
+                  />
+                </div>
+                <div>
+                  <h2 id="project-modal-title" className="text-lg font-bold text-slate-900">
+                    {modalMode === "new" ? "New Project" : "Edit Project"}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {modalMode === "new" ? "Create and publish a new client case study." : "Update project details, images, and live links."}
+                  </p>
+                </div>
+              </div>
+
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 cursor-pointer"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
                 aria-label="Close"
               >
-                <Icon icon="ph:x-bold" width={22} height={22} />
+                <Icon icon="ph:x-bold" width={20} height={20} />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:py-5">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 scrollbar-thin scrollbar-thumb-slate-200">
               <ProjectForm
                 key={editingId || "new"}
                 projectId={editingId}

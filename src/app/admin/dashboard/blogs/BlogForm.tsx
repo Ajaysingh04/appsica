@@ -142,45 +142,50 @@ export default function BlogForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">Title</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Article Title *</label>
           <input
+            type="text"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
               if (!slugTouched) setSlug(slugify(e.target.value));
             }}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            placeholder="e.g. Modern Web Development Trends in 2026"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             required
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">URL slug</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">URL slug</label>
           <input
+            type="text"
             value={slug}
             onChange={(e) => {
               setSlugTouched(true);
               setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"));
             }}
             placeholder="auto from title"
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">Excerpt</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Excerpt / Summary</label>
           <textarea
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
             rows={3}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            placeholder="Brief teaser or summary displayed on the blog list..."
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="text-xs font-medium text-slate-700">Blog content</label>
+          <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Blog Content (Markdown supported)</label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={10}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            placeholder="Write full article content here in Markdown..."
+            className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
         </div>
       </div>
