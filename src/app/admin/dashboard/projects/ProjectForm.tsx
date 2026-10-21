@@ -430,50 +430,95 @@ export default function ProjectForm({
           placeholder="Next.js, MongoDB, Tailwind CSS, Stripe"
           className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all duration-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
         />
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-semibold text-slate-400">Quick add:</span>
+          {["Next.js", "React", "Node.js", "TypeScript", "Tailwind CSS", "MongoDB", "Stripe", "AWS", "Python", "Docker"].map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                const current = techStackRaw.split(",").map((s) => s.trim()).filter(Boolean);
+                if (!current.includes(t)) {
+                  setTechStackRaw(current.length > 0 ? `${current.join(", ")}, ${t}` : t);
+                }
+              }}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer"
+            >
+              + {t}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-4">
-        <div className="flex flex-wrap items-center gap-6">
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 cursor-pointer">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 space-y-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          Visibility & Display Position
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label
+            className={`flex items-start gap-3 rounded-xl border p-3.5 transition-all cursor-pointer ${
+              published
+                ? "border-emerald-300 bg-emerald-50/60 shadow-xs"
+                : "border-slate-200 bg-white"
+            }`}
+          >
             <input
               type="checkbox"
               checked={published}
               onChange={(e) => setPublished(e.target.checked)}
-              className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
             />
-            Published (Active on Site)
+            <div>
+              <p className="text-xs font-bold text-slate-900">Published Live</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Visible to visitors on live portfolio & case studies.
+              </p>
+            </div>
           </label>
-          <label className="flex items-center gap-2 text-sm font-medium text-amber-800 cursor-pointer">
+
+          <label
+            className={`flex items-start gap-3 rounded-xl border p-3.5 transition-all cursor-pointer ${
+              isDemo
+                ? "border-amber-300 bg-amber-50/70 shadow-xs"
+                : "border-slate-200 bg-white"
+            }`}
+          >
             <input
               type="checkbox"
               checked={isDemo}
               onChange={(e) => setIsDemo(e.target.checked)}
-              className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 h-4 w-4"
+              className="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
             />
-            Demo Template (Hidden from public website)
+            <div>
+              <p className="text-xs font-bold text-amber-900">Demo Mockup Only</p>
+              <p className="text-[11px] text-amber-700/80 mt-0.5">
+                Admin reference. Hidden from visitors on public website.
+              </p>
+            </div>
           </label>
         </div>
 
         <div className="border-t border-slate-200 pt-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <span>Display Position (Order)</span>
-                <span className="rounded bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800">
-                  {order <= 1 ? "#1 (Top)" : `#${order}`}
+                <span>Display Order Position</span>
+                <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                  {order <= 1 ? "Rank #1 (Featured Top)" : `Rank #${order}`}
                 </span>
               </label>
               <p className="mt-0.5 text-[11px] text-slate-500">
-                Position 1 displays first on the website, followed by Position 2, Position 3, etc.
+                Determines sort order on the public website showcase.
               </p>
             </div>
 
             <select
               value={order || 1}
               onChange={(e) => setOrder(Number(e.target.value))}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-800 shadow-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer sm:w-60"
+              className="admin-input rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-xs outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 cursor-pointer sm:w-56"
             >
-              <option value={1}>1st - Position 1 (Top)</option>
+              <option value={1}>1st - Position 1 (Top Hero)</option>
               <option value={2}>2nd - Position 2</option>
               <option value={3}>3rd - Position 3</option>
               <option value={4}>4th - Position 4</option>
@@ -493,21 +538,40 @@ export default function ProjectForm({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-6">
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60 cursor-pointer"
-        >
-          {saving ? "Saving…" : projectId ? "Update project" : "Create project"}
-        </button>
-        {onClose && (
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-500/25 transition-all duration-150 hover:from-blue-700 hover:to-indigo-700 active:scale-95 disabled:opacity-60 cursor-pointer"
+          >
+            {saving ? "Saving…" : projectId ? "Update Project" : "Create Project"}
+          </button>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs transition-all duration-150 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+
+        {projectId && (
           <button
             type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+            onClick={async () => {
+              if (!confirm("Are you sure you want to delete this project permanently?")) return;
+              const res = await fetch(`/api/admin/projects/${projectId}`, { method: "DELETE" });
+              if (res.ok) {
+                await onSaved?.();
+                if (!onSaved) router.push("/admin/dashboard");
+              }
+            }}
+            className="rounded-xl border border-red-200 bg-red-50/80 px-4 py-2.5 text-xs font-bold text-red-600 transition-all duration-150 hover:bg-red-100 cursor-pointer active:scale-95"
           >
-            Cancel
+            Delete Project
           </button>
         )}
       </div>

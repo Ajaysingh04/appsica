@@ -32,14 +32,9 @@ const navSections: NavSection[] = [
     title: "Project Management",
     items: [
       {
-        name: "All Projects",
+        name: "Projects & Portfolio",
         href: "/admin/dashboard",
         icon: "solar:folder-with-files-bold-duotone",
-      },
-      {
-        name: "Portfolio",
-        href: "/admin/dashboard/portfolio",
-        icon: "solar:gallery-wide-bold-duotone",
       },
       {
         name: "Services",
@@ -97,8 +92,9 @@ export default function AdminLayoutShell({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getPageTitle = () => {
-    if (pathname === "/admin/dashboard") return "All Projects";
-    if (pathname.startsWith("/admin/dashboard/portfolio")) return "Portfolio & Live Showcase";
+    if (pathname === "/admin/dashboard" || pathname.startsWith("/admin/dashboard/portfolio")) {
+      return "Projects & Portfolio Showcase";
+    }
     if (pathname.startsWith("/admin/dashboard/services")) return "Services Management";
     if (pathname.startsWith("/admin/dashboard/technologies")) return "Technologies & Stack";
     if (pathname.startsWith("/admin/dashboard/messages")) return "Client Inquiries & Leads";
