@@ -506,16 +506,20 @@ export default function ProjectForm({
     }
 
     // Determine primary Play Store URL
-    const primaryPlayStore =
-      playStoreUrl.trim() ||
-      appsList[0]?.playStoreUrl?.trim() ||
-      appsList.find((a) => a.playStoreUrl?.trim())?.playStoreUrl?.trim() ||
-      "";
+    const activeAppWithPlayStore = appsList.find((a) => a.playStoreUrl?.trim());
+    const primaryPlayStore = isMultiAppSuite
+      ? activeAppWithPlayStore?.playStoreUrl?.trim() || ""
+      : playStoreUrl.trim();
 
-    const primaryAppStore =
-      appStoreUrl.trim() ||
-      appsList[0]?.appStoreUrl?.trim() ||
-      "";
+    const activeAppWithAppStore = appsList.find((a) => a.appStoreUrl?.trim());
+    const primaryAppStore = isMultiAppSuite
+      ? activeAppWithAppStore?.appStoreUrl?.trim() || ""
+      : appStoreUrl.trim();
+
+    // Only persist apps array if at least one sub-app has a link or screenshot
+    const hasAnySubAppContent = appsList.some(
+      (a) => Boolean(a.playStoreUrl?.trim()) || Boolean(a.appStoreUrl?.trim()) || Boolean(a.images?.length)
+    );
 
     setSaving(true);
     try {
@@ -530,7 +534,7 @@ export default function ProjectForm({
         liveLink: liveLink.trim(),
         coverImage: masterCover,
         images: combinedImages,
-        apps: isMultiAppSuite ? appsList : [],
+        apps: isMultiAppSuite && hasAnySubAppContent ? appsList : [],
         features: feats,
         techStack,
         published,

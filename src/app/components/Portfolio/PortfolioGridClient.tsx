@@ -235,13 +235,13 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                     {/* Top Status Badge */}
                     <div className="absolute top-3.5 left-3.5 z-10">
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-950/80 backdrop-blur-md border border-white/15 text-slate-200 shadow-md flex items-center gap-1.5">
-                        {project.apps && project.apps.length > 1 ? (
+                        {project.apps && project.apps.length > 1 && hasAppLinks ? (
                           <>
                             <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
                             <Icon icon="solar:box-minimalistic-bold" width={11} height={11} className="text-violet-400" />
                             <span className="text-violet-300 font-extrabold">{project.apps.length}-in-1 Apps Suite</span>
                           </>
-                        ) : project.playStoreUrl ? (
+                        ) : hasAppLinks ? (
                           <>
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                             <Icon icon="solar:play-bold" width={10} height={10} className="text-emerald-400" />
@@ -290,8 +290,8 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                         </p>
                       )}
 
-                      {/* Multi-App Ecosystem Chips (if 3-in-1 suite) */}
-                      {project.apps && project.apps.length > 1 && (
+                      {/* Multi-App Ecosystem Chips (if 3-in-1 suite with active apps) */}
+                      {project.apps && project.apps.length > 1 && hasAppLinks && (
                         <div className="mb-3 flex flex-wrap gap-1.5">
                           {project.apps.map((app, aIdx) => (
                             <span
