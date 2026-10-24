@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@iconify/react";
@@ -37,6 +37,18 @@ interface PortfolioGridClientProps {
 export default function PortfolioGridClient({ projects }: PortfolioGridClientProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [openAppDropdown, setOpenAppDropdown] = useState<string | null>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".app-dropdown-container")) {
+        setOpenAppDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Determine category dynamically with explicit category support
   const getProjectCategory = (p: ProjectCardData) => {
@@ -180,6 +192,20 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                   ? project.techStack
                   : fallbackTech;
 
+              // Application status & links
+              const appsWithLink = (project.apps || []).filter((a) => Boolean(a.playStoreUrl));
+              const hasAppLinks = appsWithLink.length > 0 || Boolean(project.playStoreUrl);
+              const singleAppUrl = appsWithLink[0]?.playStoreUrl || project.playStoreUrl;
+              const singleAppRole = appsWithLink[0]?.role;
+              const singleAppLabel =
+                singleAppRole === "vendor"
+                  ? "Vendor App"
+                  : singleAppRole === "customer"
+                  ? "Customer App"
+                  : singleAppRole === "delivery"
+                  ? "Delivery App"
+                  : "Application";
+
               return (
                 <motion.div
                   layout
@@ -190,8 +216,11 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                   key={project.slug}
                   className="group relative flex flex-col rounded-2xl bg-slate-900/70 border border-white/10 hover:border-sky-500/40 hover:shadow-[0_15px_35px_-10px_rgba(56,189,248,0.2)] transition-all duration-300 overflow-hidden backdrop-blur-xl"
                 >
-                  {/* Image Container - Compact Height */}
-                  <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-950">
+                  {/* Image Container - Clickable to Case Study */}
+                  <Link
+                    href={`/portfolio/${project.slug}`}
+                    className="relative h-48 sm:h-52 w-full block overflow-hidden bg-slate-950 cursor-pointer"
+                  >
                     <Image
                       src={project.coverImage}
                       alt={project.title}
@@ -238,14 +267,16 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                         <Icon icon="solar:arrow-right-up-linear" width="14" height="14" />
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Card Content */}
                   <div className="p-5 flex flex-col flex-grow justify-between bg-slate-900/80">
                     <div>
                       {/* Title */}
                       <h3 className="text-lg font-bold text-white group-hover:text-sky-300 transition-colors capitalize tracking-tight line-clamp-1 mb-2">
-                        {project.title}
+                        <Link href={`/portfolio/${project.slug}`}>
+                          {project.title}
+                        </Link>
                       </h3>
 
                       {/* Description */}
@@ -295,65 +326,141 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
 
                       {/* Bottom Action Row */}
                       <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs">
-                        <Link
-                          href={`/portfolio/${project.slug}`}
-                          className="font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
-                        >
-                          <span>Case Study</span>
-                          <Icon icon="solar:arrow-right-linear" width={14} height={14} />
-                        </Link>
+                        {hasAppLinks ? (
+                          /* JINME APPLICATION KI LINK HAI: Ek side Live Site aur ek side Application */
+                          <>
+                            {/* Side 1 (Left): Live Site */}
+                            {project.liveLink ? (
+                              <Link
+                                href={project.liveLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(0,82,204,0.3)] transition-all hover:scale-105"
+                              >
+                                <Icon icon="solar:globe-linear" width={13} height={13} />
+                                <span>Live Site</span>
+                                <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
+                              </Link>
+                            ) : (
+                              <Link
+                                href={`/portfolio/${project.slug}`}
+                                className="font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+                              >
+                                <span>Case Study</span>
+                                <Icon icon="solar:arrow-right-linear" width={14} height={14} />
+                              </Link>
+                            )}
 
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {project.apps && project.apps.some((a) => a.playStoreUrl) ? (
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {project.apps
-                                .filter((a) => a.playStoreUrl)
-                                .map((app, aIdx) => (
-                                  <Link
-                                    key={aIdx}
-                                    href={app.playStoreUrl!}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-105"
-                                    title={`${app.title || "App"}: Open on Google Play`}
+                            {/* Side 2 (Right): Application Option */}
+                            <div className="relative app-dropdown-container">
+                              {appsWithLink.length > 1 ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setOpenAppDropdown(
+                                        openAppDropdown === project.slug ? null : project.slug
+                                      );
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-105 cursor-pointer"
                                   >
                                     <Icon icon="solar:play-bold" width={11} height={11} />
-                                    <span>
-                                      {app.role === "vendor"
-                                        ? "Vendor Play Store"
-                                        : app.role === "customer"
-                                        ? "Customer Play Store"
-                                        : app.role === "delivery"
-                                        ? "Delivery Play Store"
-                                        : "Google Play"}
+                                    <span>Application</span>
+                                    <span className="px-1.5 py-0.2 rounded-full bg-black/30 text-[10px] font-mono">
+                                      {appsWithLink.length}
                                     </span>
-                                    <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
-                                  </Link>
-                                ))}
+                                    <Icon
+                                      icon="solar:alt-arrow-down-linear"
+                                      width={12}
+                                      height={12}
+                                      className={`transition-transform duration-200 ${
+                                        openAppDropdown === project.slug ? "rotate-180" : ""
+                                      }`}
+                                    />
+                                  </button>
+
+                                  {openAppDropdown === project.slug && (
+                                    <div
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="absolute bottom-full right-0 mb-2 w-60 rounded-xl bg-slate-900/95 border border-emerald-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.8)] backdrop-blur-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150"
+                                    >
+                                      <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-white/10 mb-1.5 flex items-center justify-between">
+                                        <span>Select Application</span>
+                                        <span className="text-emerald-400 font-mono text-[9px]">
+                                          Google Play
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-col gap-1">
+                                        {appsWithLink.map((app, aIdx) => (
+                                          <a
+                                            key={aIdx}
+                                            href={app.playStoreUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between px-2.5 py-2 rounded-lg bg-white/[0.04] hover:bg-emerald-500/20 border border-transparent hover:border-emerald-500/30 text-white text-xs font-semibold transition-all group/item"
+                                          >
+                                            <div className="flex items-center gap-2">
+                                              <span className="w-2 h-2 rounded-full bg-emerald-400 group-hover/item:scale-125 transition-transform" />
+                                              <span className="capitalize">
+                                                {app.role === "vendor"
+                                                  ? "Vendor App"
+                                                  : app.role === "customer"
+                                                  ? "Customer App"
+                                                  : app.role === "delivery"
+                                                  ? "Delivery App"
+                                                  : app.title || `App ${aIdx + 1}`}
+                                              </span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5">
+                                              Play Store
+                                              <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
+                                            </span>
+                                          </a>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              ) : singleAppUrl ? (
+                                <Link
+                                  href={singleAppUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-105"
+                                >
+                                  <Icon icon="solar:play-bold" width={11} height={11} />
+                                  <span>{singleAppLabel}</span>
+                                  <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
+                                </Link>
+                              ) : null}
                             </div>
-                          ) : project.playStoreUrl ? (
+                          </>
+                        ) : (
+                          /* JINME APPLICATION KI LINK NAHI HAI: Pehle jaisa (Case Study left, Live Site right) */
+                          <>
                             <Link
-                              href={project.playStoreUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-105"
+                              href={`/portfolio/${project.slug}`}
+                              className="font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
                             >
-                              <Icon icon="solar:play-bold" width={11} height={11} />
-                              <span>Play Store</span>
-                              <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
+                              <span>Case Study</span>
+                              <Icon icon="solar:arrow-right-linear" width={14} height={14} />
                             </Link>
-                          ) : isExternal ? (
-                            <Link
-                              href={project.liveLink!}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(0,82,204,0.3)] transition-all hover:scale-105"
-                            >
-                              <span>Live Demo</span>
-                              <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
-                            </Link>
-                          ) : null}
-                        </div>
+
+                            {project.liveLink ? (
+                              <Link
+                                href={project.liveLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(0,82,204,0.3)] transition-all hover:scale-105"
+                              >
+                                <span>Live Site</span>
+                                <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
+                              </Link>
+                            ) : null}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
