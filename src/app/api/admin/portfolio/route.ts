@@ -45,6 +45,20 @@ export async function POST(request: Request) {
     const category = String(body.category || "web").trim();
     const playStoreUrl = String(body.playStoreUrl || "").trim();
     const appStoreUrl = String(body.appStoreUrl || "").trim();
+    const apps = Array.isArray(body.apps)
+      ? body.apps
+          .map((a: any) => ({
+            role: String(a.role || "customer").trim(),
+            title: String(a.title || "").trim(),
+            summary: String(a.summary || "").trim(),
+            playStoreUrl: String(a.playStoreUrl || "").trim(),
+            appStoreUrl: String(a.appStoreUrl || "").trim(),
+            liveLink: String(a.liveLink || "").trim(),
+            icon: String(a.icon || "").trim(),
+            images: Array.isArray(a.images) ? a.images.map((img: any) => String(img).trim()).filter(Boolean) : [],
+          }))
+          .filter((a: any) => a.title || a.playStoreUrl)
+      : [];
     const images = Array.isArray(body.images)
       ? body.images.map((u: unknown) => String(u).trim()).filter(Boolean)
       : [];
@@ -83,6 +97,7 @@ export async function POST(request: Request) {
       category,
       playStoreUrl,
       appStoreUrl,
+      apps,
       published,
       isDemo,
       order,

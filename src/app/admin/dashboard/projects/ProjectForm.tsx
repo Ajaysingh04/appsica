@@ -8,6 +8,16 @@ import { MAX_ADMIN_IMAGE_BYTES, formatMaxImageSizeLabel } from "@/lib/adminUploa
 
 type Feature = { title: string; description: string };
 
+export type SubAppFormState = {
+  role: "customer" | "vendor" | "delivery" | "custom" | string;
+  title: string;
+  summary?: string;
+  playStoreUrl: string;
+  appStoreUrl?: string;
+  liveLink?: string;
+  images: string[];
+};
+
 export type ProjectFormInitial = {
   title?: string;
   slug?: string;
@@ -21,6 +31,7 @@ export type ProjectFormInitial = {
   category?: string;
   playStoreUrl?: string;
   appStoreUrl?: string;
+  apps?: SubAppFormState[];
   published?: boolean;
   isDemo?: boolean;
   order?: number;
@@ -38,8 +49,8 @@ function slugify(input: string) {
 const CATEGORIES = [
   {
     id: "mobile",
-    label: "Mobile App",
-    subtitle: "Android & iOS Applications with Play Store / App Store",
+    label: "Mobile App (Suite)",
+    subtitle: "Complete mobile ecosystem: Customer, Vendor, and Delivery apps",
     icon: "solar:smartphone-bold-duotone",
     badge: "Play Store Ready",
     color: "from-blue-600 to-indigo-600",
@@ -84,6 +95,36 @@ const MOBILE_TECH_PRESETS = [
   "GraphQL",
   "SQLite",
   "Fastlane",
+];
+
+const DEFAULT_ECOSYSTEM_APPS: SubAppFormState[] = [
+  {
+    role: "customer",
+    title: "Customer Mobile App",
+    summary: "Browse menus & catalog, real-time live order tracking, secure payment checkout.",
+    playStoreUrl: "",
+    appStoreUrl: "",
+    liveLink: "",
+    images: [],
+  },
+  {
+    role: "vendor",
+    title: "Vendor / Store Partner App",
+    summary: "Order management, menu & inventory control, live revenue dashboard.",
+    playStoreUrl: "",
+    appStoreUrl: "",
+    liveLink: "",
+    images: [],
+  },
+  {
+    role: "delivery",
+    title: "Delivery Partner App",
+    summary: "Instant dispatch alerts, live turn-by-turn route navigation, earnings payout.",
+    playStoreUrl: "",
+    appStoreUrl: "",
+    liveLink: "",
+    images: [],
+  },
 ];
 
 export default function ProjectForm({
@@ -135,12 +176,40 @@ export default function ProjectForm({
   const [summary, setSummary] = useState(initial?.summary ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
 
-  // Links
+  // Multi-App Ecosystem State (Customer, Vendor, Delivery, etc.)
+  const [isMultiAppSuite, setIsMultiAppSuite] = useState<boolean>(() => {
+    if (initial?.apps && initial.apps.length > 0) return true;
+    return initialCategory === "mobile";
+  });
+
+  const [appsList, setAppsList] = useState<SubAppFormState[]>(() => {
+    if (initial?.apps && initial.apps.length > 0) {
+      return initial.apps.map((a) => ({
+        role: a.role || "customer",
+        title: a.title || "App",
+        summary: a.summary || "",
+        playStoreUrl: a.playStoreUrl || "",
+        appStoreUrl: a.appStoreUrl || "",
+        liveLink: a.liveLink || "",
+        images: Array.isArray(a.images) ? a.images : [],
+      }));
+    }
+    // Pre-populate with 3-in-1 suite: Customer, Vendor, Delivery
+    return DEFAULT_ECOSYSTEM_APPS.map((a, i) => ({
+      ...a,
+      playStoreUrl: i === 0 ? initial?.playStoreUrl || "" : "",
+      appStoreUrl: i === 0 ? initial?.appStoreUrl || "" : "",
+    }));
+  });
+
+  const [activeAppIndex, setActiveAppIndex] = useState<number>(0);
+
+  // Fallback single links
   const [playStoreUrl, setPlayStoreUrl] = useState(initial?.playStoreUrl ?? "");
   const [appStoreUrl, setAppStoreUrl] = useState(initial?.appStoreUrl ?? "");
   const [liveLink, setLiveLink] = useState(initial?.liveLink ?? "");
 
-  // Images
+  // Master Banner & Screenshots
   const [coverImage, setCoverImage] = useState(initial?.coverImage ?? "");
   const [images, setImages] = useState<string[]>(() => {
     if (initial?.images?.length) return [...initial.images];
@@ -148,7 +217,7 @@ export default function ProjectForm({
     return [];
   });
   const [customImageUrl, setCustomImageUrl] = useState("");
-  const [previewMockupMode, setPreviewMockupMode] = useState<boolean>(initialCategory === "mobile");
+  const [previewMockupMode, setPreviewMockupMode] = useState<boolean>(true);
 
   // Features & Tech Stack
   const [features, setFeatures] = useState<Feature[]>(
@@ -171,7 +240,10 @@ export default function ProjectForm({
   const [uploading, setUploading] = useState(false);
   const [uploadProgressText, setUploadProgressText] = useState<string>("");
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Refs for upload
+  const masterFileInputRef = useRef<HTMLInputElement>(null);
+  const appFileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(async (file: File) => {
     const fd = new FormData();
@@ -182,7 +254,8 @@ export default function ProjectForm({
     return data.url as string;
   }, []);
 
-  async function onPickFiles(files: FileList | null) {
+  // Upload Master / Global images
+  async function onPickMasterFiles(files: FileList | null) {
     if (!files?.length) return;
     setMessage(null);
 
@@ -217,7 +290,55 @@ export default function ProjectForm({
       setCoverImage((c) => c || urls[0] || "");
       setMessage({
         type: "ok",
-        text: `Successfully uploaded ${urls.length} image(s)!`,
+        text: `Successfully uploaded ${urls.length} master image(s)!`,
+      });
+    } catch (e) {
+      setMessage({ type: "err", text: (e as Error).message });
+    } finally {
+      setUploading(false);
+      setUploadProgressText("");
+    }
+  }
+
+  // Upload Sub-App Screenshots for active app
+  async function onPickAppFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setMessage(null);
+
+    const fileArr = Array.from(files);
+    const toUpload = fileArr.filter((f) => f.size <= MAX_ADMIN_IMAGE_BYTES);
+    if (!toUpload.length) return;
+
+    setUploading(true);
+    setUploadProgressText(`Uploading screenshots for ${appsList[activeAppIndex]?.title || "App"}...`);
+
+    try {
+      const urls: string[] = [];
+      for (let i = 0; i < toUpload.length; i++) {
+        const url = await uploadFile(toUpload[i]);
+        urls.push(url);
+      }
+
+      setAppsList((prev) => {
+        const copy = [...prev];
+        const currentApp = copy[activeAppIndex];
+        if (currentApp) {
+          copy[activeAppIndex] = {
+            ...currentApp,
+            images: [...new Set([...(currentApp.images || []), ...urls])],
+          };
+        }
+        return copy;
+      });
+
+      // Also ensure master cover gets an image if currently empty
+      if (!coverImage && urls[0]) {
+        setCoverImage(urls[0]);
+      }
+
+      setMessage({
+        type: "ok",
+        text: `Uploaded ${urls.length} screenshots for ${appsList[activeAppIndex]?.title || "App"}!`,
       });
     } catch (e) {
       setMessage({ type: "err", text: (e as Error).message });
@@ -238,7 +359,7 @@ export default function ProjectForm({
     setCustomImageUrl("");
   }
 
-  function removeImage(url: string) {
+  function removeMasterImage(url: string) {
     setImages((prev) => {
       const next = prev.filter((u) => u !== url);
       setCoverImage((c) => (c === url ? next[0] || "" : c));
@@ -246,16 +367,53 @@ export default function ProjectForm({
     });
   }
 
-  function moveImage(index: number, direction: "left" | "right") {
-    setImages((prev) => {
-      const targetIndex = direction === "left" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+  function removeAppImage(appIdx: number, imgUrl: string) {
+    setAppsList((prev) => {
       const copy = [...prev];
-      const temp = copy[index];
-      copy[index] = copy[targetIndex];
-      copy[targetIndex] = temp;
+      const target = copy[appIdx];
+      if (target) {
+        copy[appIdx] = {
+          ...target,
+          images: (target.images || []).filter((u) => u !== imgUrl),
+        };
+      }
       return copy;
     });
+  }
+
+  function updateActiveAppField(field: keyof SubAppFormState, val: any) {
+    setAppsList((prev) => {
+      const copy = [...prev];
+      if (copy[activeAppIndex]) {
+        copy[activeAppIndex] = { ...copy[activeAppIndex], [field]: val };
+      }
+      return copy;
+    });
+  }
+
+  function addNewCustomApp() {
+    const newApp: SubAppFormState = {
+      role: "custom",
+      title: `App #${appsList.length + 1}`,
+      summary: "Additional service or administrative mobile app.",
+      playStoreUrl: "",
+      appStoreUrl: "",
+      liveLink: "",
+      images: [],
+    };
+    setAppsList((prev) => [...prev, newApp]);
+    setActiveAppIndex(appsList.length);
+  }
+
+  function removeApp(index: number) {
+    if (appsList.length <= 1) {
+      alert("At least one app is required in the ecosystem.");
+      return;
+    }
+    if (confirm(`Remove "${appsList[index]?.title}" from this project?`)) {
+      setAppsList((prev) => prev.filter((_, i) => i !== index));
+      setActiveAppIndex(Math.max(0, index - 1));
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -267,20 +425,35 @@ export default function ProjectForm({
       .map((t) => t.trim())
       .filter(Boolean);
     const feats = features.filter((f) => f.title.trim());
-    const imageList = images.length ? images : coverImage ? [coverImage] : [];
-    const cover = coverImage || imageList[0] || "";
+
+    // Gather all screenshots across all sub-apps + master images
+    const subAppImages = appsList.flatMap((a) => a.images || []);
+    const combinedImages = [...new Set([...images, ...subAppImages])].filter(Boolean);
+    const masterCover = coverImage || combinedImages[0] || "";
 
     if (!title.trim()) {
       setMessage({ type: "err", text: "Project Title is required." });
       return;
     }
-    if (!cover) {
+    if (!masterCover) {
       setMessage({
         type: "err",
-        text: "Please upload at least one image or app icon for this project.",
+        text: "Please upload at least one image or screenshot for this project.",
       });
       return;
     }
+
+    // Determine primary Play Store URL
+    const primaryPlayStore =
+      playStoreUrl.trim() ||
+      appsList[0]?.playStoreUrl?.trim() ||
+      appsList.find((a) => a.playStoreUrl?.trim())?.playStoreUrl?.trim() ||
+      "";
+
+    const primaryAppStore =
+      appStoreUrl.trim() ||
+      appsList[0]?.appStoreUrl?.trim() ||
+      "";
 
     setSaving(true);
     try {
@@ -290,11 +463,12 @@ export default function ProjectForm({
         summary: summary.trim(),
         description: description.trim(),
         category,
-        playStoreUrl: playStoreUrl.trim(),
-        appStoreUrl: appStoreUrl.trim(),
+        playStoreUrl: primaryPlayStore,
+        appStoreUrl: primaryAppStore,
         liveLink: liveLink.trim(),
-        coverImage: cover,
-        images: imageList,
+        coverImage: masterCover,
+        images: combinedImages,
+        apps: isMultiAppSuite ? appsList : [],
         features: feats,
         techStack,
         published,
@@ -328,6 +502,8 @@ export default function ProjectForm({
     }
   }
 
+  const currentApp = appsList[activeAppIndex] || appsList[0];
+
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl space-y-7 pb-10 text-slate-900">
       {/* Status Alert Banner */}
@@ -349,7 +525,7 @@ export default function ProjectForm({
           <button
             type="button"
             onClick={() => setMessage(null)}
-            className="text-slate-400 hover:text-slate-700"
+            className="text-slate-400 hover:text-slate-700 cursor-pointer"
           >
             <Icon icon="solar:close-circle-linear" width={18} height={18} />
           </button>
@@ -371,7 +547,7 @@ export default function ProjectForm({
           {category === "mobile" && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-2xs">
               <Icon icon="solar:smartphone-bold" width={14} height={14} />
-              <span>Mobile App Mode Active</span>
+              <span>Mobile App Ecosystem Active</span>
             </span>
           )}
         </div>
@@ -386,7 +562,7 @@ export default function ProjectForm({
                 onClick={() => {
                   setCategory(cat.id);
                   if (cat.id === "mobile") {
-                    setPreviewMockupMode(true);
+                    setIsMultiAppSuite(true);
                   }
                 }}
                 className={`flex flex-col items-start text-left p-3.5 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
@@ -423,14 +599,14 @@ export default function ProjectForm({
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
         <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-2">
           <Icon icon="solar:pen-new-square-bold-duotone" width={18} height={18} className="text-blue-600" />
-          <span>Basic Information</span>
+          <span>Product / Suite Information</span>
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           {/* Project Title */}
           <div className="sm:col-span-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Project / App Title *
+              Product / Project Title *
             </label>
             <input
               type="text"
@@ -439,7 +615,7 @@ export default function ProjectForm({
                 setTitle(e.target.value);
                 if (!slugTouched) setSlug(slugify(e.target.value));
               }}
-              placeholder="e.g. QuickBite - Food Delivery Mobile App"
+              placeholder="e.g. QuickBite - 3-in-1 Food Delivery Ecosystem"
               className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
               required
             />
@@ -464,7 +640,7 @@ export default function ProjectForm({
                   setSlugTouched(true);
                   setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"));
                 }}
-                placeholder="quickbite-food-delivery"
+                placeholder="quickbite-food-delivery-ecosystem"
                 className="admin-input w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-24 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
               />
             </div>
@@ -479,7 +655,7 @@ export default function ProjectForm({
               type="text"
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
-              placeholder="A modern food delivery app with live GPS tracking, menu browsing, and instant checkout."
+              placeholder="A complete 3-app ecosystem with Customer, Vendor Partner, and Delivery Rider mobile apps."
               className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             />
           </div>
@@ -487,156 +663,316 @@ export default function ProjectForm({
           {/* Full Description */}
           <div className="sm:col-span-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Detailed Architecture & Description
+              Detailed Architecture & Overview
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              placeholder="Comprehensive overview of features, problem statement, technology stack, and engineering impact..."
+              placeholder="Architectural deep dive covering the 3 interconnected apps, real-time WebSocket dispatch engine, live geolocation tracking, and cloud scalability..."
               className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             />
           </div>
         </div>
       </div>
 
-      {/* SECTION 3: Store & Live Links (Play Store, App Store, Web Demo) */}
-      <div
-        className={`rounded-2xl border p-5 shadow-xs transition-all ${
-          category === "mobile"
-            ? "border-blue-300 bg-gradient-to-b from-blue-50/50 to-white ring-1 ring-blue-500/20"
-            : "border-slate-200 bg-white"
-        }`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
+      {/* SECTION 3: Multi-App Ecosystem Suite (Customer + Vendor + Delivery) */}
+      <div className="rounded-2xl border-2 border-blue-500/30 bg-gradient-to-b from-blue-50/60 via-white to-slate-50/40 p-5 shadow-sm space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-100 pb-3">
           <div>
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800">
-              <Icon icon="solar:link-circle-bold-duotone" width={18} height={18} className="text-blue-600" />
-              <span>Direct Store & Live Application Links</span>
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Direct download & demo links displayed on cards and case study hero.
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+                <Icon icon="solar:layers-minimalistic-bold-duotone" width={20} height={20} />
+              </span>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">
+                  Multi-App Ecosystem (3-in-1 Suite Manager)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Manage Customer App, Vendor Partner App, and Delivery Rider App links & screenshots together!
+                </p>
+              </div>
+            </div>
           </div>
-          {category === "mobile" && (
-            <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-[11px] font-extrabold text-emerald-800 flex items-center gap-1">
-              <Icon icon="solar:check-circle-bold" width={14} height={14} />
-              <span>Direct Play Store button enabled</span>
-            </span>
-          )}
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+              <input
+                type="checkbox"
+                checked={isMultiAppSuite}
+                onChange={(e) => setIsMultiAppSuite(e.target.checked)}
+                className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span>Multi-App Suite Enabled ({appsList.length} Apps)</span>
+            </label>
+          </div>
         </div>
 
-        <div className="space-y-4">
-          {/* 1. Google Play Store Link */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                <span className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                  <Icon icon="solar:play-bold" width={14} height={14} />
-                </span>
-                <span>Google Play Store URL</span>
-                {category === "mobile" && (
-                  <span className="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                    Recommended for Mobile Apps
-                  </span>
-                )}
-              </label>
-              {playStoreUrl && (
-                <a
-                  href={playStoreUrl.startsWith("http") ? playStoreUrl : `https://${playStoreUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                >
-                  <span>Test Link</span>
-                  <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
-                </a>
-              )}
-            </div>
-            <input
-              type="url"
-              value={playStoreUrl}
-              onChange={(e) => setPlayStoreUrl(e.target.value)}
-              placeholder="https://play.google.com/store/apps/details?id=com.yourcompany.app"
-              className="admin-input w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 focus:outline-none"
-            />
-            <p className="text-[11px] text-slate-500 mt-1">
-              Visitors will see a <strong>"Google Play"</strong> download button directly opening this app on the Play Store.
-            </p>
-          </div>
+        {isMultiAppSuite && (
+          <div>
+            {/* Apps Tab Navigator */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+              {appsList.map((app, idx) => {
+                const isActive = activeAppIndex === idx;
+                const roleIcon =
+                  app.role === "customer"
+                    ? "solar:smartphone-bold"
+                    : app.role === "vendor"
+                    ? "solar:shop-2-bold"
+                    : app.role === "delivery"
+                    ? "solar:delivery-bold"
+                    : "solar:widget-bold";
 
-          {/* 2. Apple App Store Link */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                <span className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center shadow-xs">
-                  <Icon icon="solar:round-apple-bold" width={14} height={14} />
-                </span>
-                <span>Apple App Store URL (Optional)</span>
-              </label>
-              {appStoreUrl && (
-                <a
-                  href={appStoreUrl.startsWith("http") ? appStoreUrl : `https://${appStoreUrl}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                >
-                  <span>Test Link</span>
-                  <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
-                </a>
-              )}
-            </div>
-            <input
-              type="url"
-              value={appStoreUrl}
-              onChange={(e) => setAppStoreUrl(e.target.value)}
-              placeholder="https://apps.apple.com/app/your-app-name/id123456789"
-              className="admin-input w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-slate-800 focus:ring-4 focus:ring-slate-500/15 focus:outline-none"
-            />
-          </div>
+                const roleColor =
+                  app.role === "customer"
+                    ? "bg-emerald-500"
+                    : app.role === "vendor"
+                    ? "bg-amber-500"
+                    : app.role === "delivery"
+                    ? "bg-blue-600"
+                    : "bg-purple-600";
 
-          {/* 3. Live Web / Demo URL */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                <span className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-xs">
-                  <Icon icon="solar:global-bold" width={14} height={14} />
-                </span>
-                <span>Live Web Demo URL (Optional)</span>
-              </label>
-              {liveLink && (
-                <a
-                  href={liveLink.startsWith("http") ? liveLink : `https://${liveLink}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                >
-                  <span>Test Link</span>
-                  <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
-                </a>
-              )}
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setActiveAppIndex(idx)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer border ${
+                      isActive
+                        ? "bg-white text-slate-900 border-blue-600 shadow-md ring-2 ring-blue-500/20 scale-[1.02]"
+                        : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-white hover:text-slate-900"
+                    }`}
+                  >
+                    <span className={`w-2.5 h-2.5 rounded-full ${roleColor}`} />
+                    <Icon icon={roleIcon} width={16} height={16} />
+                    <span>{app.title || `App #${idx + 1}`}</span>
+                    {app.images?.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 text-[10px]">
+                        {app.images.length}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={addNewCustomApp}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-blue-600 border border-dashed border-blue-300 hover:bg-blue-50 transition shrink-0 cursor-pointer"
+              >
+                <Icon icon="solar:add-circle-bold" width={16} height={16} />
+                <span>+ Add App</span>
+              </button>
             </div>
-            <input
-              type="url"
-              value={liveLink}
-              onChange={(e) => setLiveLink(e.target.value)}
-              placeholder="https://my-app-demo.com"
-              className="admin-input w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
-            />
+
+            {/* Active Sub-App Card Editor */}
+            {currentApp && (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800">
+                      Configuring App #{activeAppIndex + 1}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      ({currentApp.role?.toUpperCase()})
+                    </span>
+                  </div>
+
+                  {appsList.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeApp(activeAppIndex)}
+                      className="text-xs font-bold text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Icon icon="solar:trash-bin-trash-bold" width={14} height={14} />
+                      <span>Remove This App</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* App Role */}
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      App Role / Type
+                    </label>
+                    <select
+                      value={currentApp.role}
+                      onChange={(e) => updateActiveAppField("role", e.target.value)}
+                      className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 cursor-pointer"
+                    >
+                      <option value="customer">📱 Customer / User App</option>
+                      <option value="vendor">🏪 Vendor / Store Partner App</option>
+                      <option value="delivery">🛵 Delivery Partner / Rider App</option>
+                      <option value="custom">⚡ Custom / Admin App</option>
+                    </select>
+                  </div>
+
+                  {/* App Title */}
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      App Display Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={currentApp.title}
+                      onChange={(e) => updateActiveAppField("title", e.target.value)}
+                      placeholder="e.g. Customer App or Vendor Partner App"
+                      className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15"
+                      required
+                    />
+                  </div>
+
+                  {/* App Summary */}
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      App Purpose / Capabilities
+                    </label>
+                    <input
+                      type="text"
+                      value={currentApp.summary || ""}
+                      onChange={(e) => updateActiveAppField("summary", e.target.value)}
+                      placeholder="e.g. Live order reception, product catalog & revenue reports."
+                      className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15"
+                    />
+                  </div>
+
+                  {/* Direct Play Store Link for this App */}
+                  <div className="sm:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                        <span className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
+                          <Icon icon="solar:play-bold" width={12} height={12} />
+                        </span>
+                        <span>Google Play Store URL for {currentApp.title}</span>
+                      </label>
+                      {currentApp.playStoreUrl && (
+                        <a
+                          href={currentApp.playStoreUrl.startsWith("http") ? currentApp.playStoreUrl : `https://${currentApp.playStoreUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                        >
+                          <span>Test Link</span>
+                          <Icon icon="solar:arrow-right-up-linear" width={12} height={12} />
+                        </a>
+                      )}
+                    </div>
+                    <input
+                      type="url"
+                      value={currentApp.playStoreUrl}
+                      onChange={(e) => updateActiveAppField("playStoreUrl", e.target.value)}
+                      placeholder={`https://play.google.com/store/apps/details?id=com.${currentApp.role}.app`}
+                      className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none"
+                    />
+                  </div>
+
+                  {/* Apple App Store Link for this App */}
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <Icon icon="solar:round-apple-bold" width={14} height={14} />
+                      <span>Apple App Store URL (Optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={currentApp.appStoreUrl || ""}
+                      onChange={(e) => updateActiveAppField("appStoreUrl", e.target.value)}
+                      placeholder="https://apps.apple.com/app/id..."
+                      className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-slate-800 outline-none"
+                    />
+                  </div>
+
+                  {/* Web / Demo Link for this App */}
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                      <Icon icon="solar:global-bold" width={14} height={14} />
+                      <span>Web / Portal URL (Optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={currentApp.liveLink || ""}
+                      onChange={(e) => updateActiveAppField("liveLink", e.target.value)}
+                      placeholder="https://portal.example.com"
+                      className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-blue-600 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Screenshots for this specific App */}
+                <div className="border-t border-slate-100 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                      <Icon icon="solar:gallery-wide-bold" width={15} height={15} className="text-blue-600" />
+                      <span>{currentApp.title} Screenshots ({currentApp.images?.length || 0})</span>
+                    </label>
+                  </div>
+
+                  <input
+                    ref={appFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={uploading}
+                    className="sr-only"
+                    onChange={(e) => {
+                      void onPickAppFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => appFileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs transition cursor-pointer shadow-sm"
+                    >
+                      <Icon icon="solar:upload-track-2-bold" width={14} height={14} />
+                      <span>Upload Screenshots for {currentApp.title}</span>
+                    </button>
+                  </div>
+
+                  {/* App Screenshots Grid */}
+                  {currentApp.images && currentApp.images.length > 0 ? (
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                      {currentApp.images.map((imgUrl, imgIdx) => (
+                        <div
+                          key={imgUrl + imgIdx}
+                          className="group relative rounded-xl overflow-hidden border border-slate-200 bg-slate-950 h-36 flex items-center justify-center shadow-xs"
+                        >
+                          <Image src={imgUrl} alt="Screenshot" fill className="object-contain p-1" sizes="120px" />
+                          <button
+                            type="button"
+                            onClick={() => removeAppImage(activeAppIndex, imgUrl)}
+                            className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-80 hover:opacity-100 cursor-pointer shadow"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-400 italic mt-2">
+                      No screenshots uploaded for this app yet. Click above to upload files.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* SECTION 4: Visual Images & Mobile Screenshots Uploader */}
-      <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/50 p-5 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 mb-4">
+      {/* SECTION 4: Master Banner & Primary Cover Image */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-900">
               <Icon icon="solar:gallery-upload-bold-duotone" width={18} height={18} className="text-blue-600" />
-              <span>Project Images & App Screenshots *</span>
+              <span>Master Portfolio Banner & Global Gallery *</span>
             </label>
             <p className="text-xs text-slate-500 mt-0.5">
-              Upload multiple screenshots from files or enter image URLs. Click "Make Cover" to set the primary card image.
+              Primary banner mockup displayed on portfolio cards and header.
             </p>
           </div>
 
@@ -651,21 +987,21 @@ export default function ProjectForm({
               }`}
             >
               <Icon icon="solar:smartphone-bold" width={14} height={14} />
-              <span>{previewMockupMode ? "Mobile Mockup View: ON" : "Standard 16:9 View"}</span>
+              <span>{previewMockupMode ? "Phone Frame: ON" : "Standard View"}</span>
             </button>
           </div>
         </div>
 
-        {/* Hidden Multi-file input */}
+        {/* Hidden Master file input */}
         <input
-          ref={fileInputRef}
+          ref={masterFileInputRef}
           type="file"
           accept="image/*"
           multiple
           disabled={uploading}
           className="sr-only"
           onChange={(e) => {
-            void onPickFiles(e.target.files);
+            void onPickMasterFiles(e.target.files);
             e.target.value = "";
           }}
         />
@@ -675,16 +1011,16 @@ export default function ProjectForm({
           <button
             type="button"
             disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => masterFileInputRef.current?.click()}
             className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/25 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             <Icon icon="solar:upload-track-2-bold" width={18} height={18} />
             <span>
               {uploading
-                ? uploadProgressText || "Uploading Images…"
+                ? uploadProgressText || "Uploading…"
                 : images.length === 0
-                ? "Upload Images From File"
-                : "+ Upload More Files"}
+                ? "Upload Master Images"
+                : "+ Add More Master Images"}
             </span>
           </button>
 
@@ -709,24 +1045,17 @@ export default function ProjectForm({
           </div>
         </div>
 
-        {uploading && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-blue-50 p-3 text-xs font-bold text-blue-700 border border-blue-200">
-            <Icon icon="eos-icons:loading" width={18} height={18} className="animate-spin text-blue-600" />
-            <span>{uploadProgressText || "Uploading images to cloud storage, please wait…"}</span>
-          </div>
-        )}
-
-        {/* Selected Images Gallery Preview */}
-        {images.length > 0 ? (
-          <div className="mt-6 border-t border-slate-200 pt-4">
-            <div className="flex items-center justify-between mb-3">
+        {/* Master Images Gallery */}
+        {images.length > 0 && (
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700">
-                Uploaded Images & Screenshots ({images.length})
+                Uploaded Master Images ({images.length})
               </span>
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm("Clear all uploaded images?")) {
+                  if (confirm("Clear master gallery images?")) {
                     setImages([]);
                     setCoverImage("");
                   }
@@ -737,111 +1066,63 @@ export default function ProjectForm({
               </button>
             </div>
 
-            {/* Grid of Images with Mobile phone frame support */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {images.map((url, idx) => {
                 const isCover = coverImage === url;
                 return (
                   <div
                     key={url + idx}
-                    className={`group relative flex flex-col rounded-2xl overflow-hidden border-2 transition-all bg-slate-950 shadow-md ${
-                      isCover
-                        ? "border-blue-600 ring-2 ring-blue-500/30"
-                        : "border-slate-200 hover:border-slate-400"
+                    className={`group relative flex flex-col rounded-xl overflow-hidden border-2 transition-all bg-slate-950 shadow-sm ${
+                      isCover ? "border-blue-600 ring-2 ring-blue-500/30" : "border-slate-200"
                     }`}
                   >
-                    {/* Image View */}
                     <div
                       className={`relative w-full overflow-hidden flex items-center justify-center bg-slate-900 ${
-                        previewMockupMode ? "h-64 sm:h-72" : "h-36 sm:h-40"
+                        previewMockupMode ? "h-52 sm:h-60" : "h-32 sm:h-36"
                       }`}
                     >
                       <Image
                         src={url}
-                        alt={`Screenshot ${idx + 1}`}
+                        alt="Preview"
                         fill
                         className={previewMockupMode ? "object-contain p-2" : "object-cover"}
-                        sizes="200px"
+                        sizes="180px"
                       />
-
-                      {/* Top Badges */}
-                      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-                        {isCover ? (
-                          <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-extrabold shadow flex items-center gap-1">
-                            <Icon icon="solar:star-bold" width={11} height={11} />
-                            <span>Primary Cover</span>
+                      {isCover && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-extrabold flex items-center gap-1 shadow">
+                            ★ Master Cover
                           </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-md bg-black/75 text-white text-[10px] font-bold backdrop-blur-xs">
-                            #{idx + 1}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Delete Button */}
+                        </div>
+                      )}
                       <button
                         type="button"
-                        onClick={() => removeImage(url)}
-                        title="Remove Image"
-                        className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center opacity-80 hover:opacity-100 hover:scale-110 transition-all cursor-pointer shadow-md"
+                        onClick={() => removeMasterImage(url)}
+                        className="absolute top-2 right-2 z-10 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center opacity-80 hover:opacity-100 cursor-pointer shadow"
                       >
-                        <Icon icon="solar:trash-bin-trash-bold" width={12} height={12} />
+                        ✕
                       </button>
                     </div>
 
-                    {/* Bottom Action Controls */}
-                    <div className="p-2 bg-slate-900 border-t border-white/10 flex items-center justify-between gap-1 text-[11px]">
-                      {/* Make Cover Button */}
+                    <div className="p-2 bg-slate-900 border-t border-white/10 flex items-center justify-between text-[10px]">
                       {!isCover ? (
                         <button
                           type="button"
                           onClick={() => setCoverImage(url)}
-                          className="flex-1 py-1 px-2 rounded-lg bg-white/10 hover:bg-blue-600 text-white font-bold text-[10px] transition cursor-pointer text-center"
+                          className="w-full py-1 rounded bg-white/10 hover:bg-blue-600 text-white font-bold transition text-center cursor-pointer"
                         >
-                          Set Cover
+                          Set As Main Banner
                         </button>
                       ) : (
-                        <span className="flex-1 py-1 px-2 rounded-lg bg-blue-600/30 text-blue-300 font-extrabold text-[10px] text-center border border-blue-500/30">
-                          Active Cover
+                        <span className="w-full py-1 text-center font-extrabold text-blue-300 bg-blue-600/30 rounded border border-blue-500/30">
+                          Active Banner
                         </span>
                       )}
-
-                      {/* Move Left / Right */}
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => moveImage(idx, "left")}
-                          title="Move Left"
-                          className="p-1 rounded-md bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          <Icon icon="solar:arrow-left-linear" width={12} height={12} />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx === images.length - 1}
-                          onClick={() => moveImage(idx, "right")}
-                          title="Move Right"
-                          className="p-1 rounded-md bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          <Icon icon="solar:arrow-right-linear" width={12} height={12} />
-                        </button>
-                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        ) : (
-          <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white/70 p-8 text-center">
-            <div className="mx-auto w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
-              <Icon icon="solar:gallery-wide-bold" width={24} height={24} />
-            </div>
-            <p className="text-sm font-bold text-slate-800">No images uploaded yet</p>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Click <strong>"Upload Images From File"</strong> to select one or multiple app screenshots from your computer.
-            </p>
           </div>
         )}
       </div>
@@ -850,7 +1131,7 @@ export default function ProjectForm({
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
         <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-2">
           <Icon icon="solar:code-square-bold-duotone" width={18} height={18} className="text-blue-600" />
-          <span>Technology Stack & Frameworks</span>
+          <span>Technology Stack & Features</span>
         </p>
 
         <div>
@@ -861,14 +1142,12 @@ export default function ProjectForm({
             type="text"
             value={techStackRaw}
             onChange={(e) => setTechStackRaw(e.target.value)}
-            placeholder="Flutter, Firebase, Kotlin, Dart, Node.js"
+            placeholder="Flutter, Firebase, Kotlin, Node.js, WebSockets, Google Maps API"
             className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
           />
 
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-slate-500">
-              {category === "mobile" ? "Mobile Stack Presets:" : "Quick add:"}
-            </span>
+            <span className="text-[11px] font-semibold text-slate-500">Quick add:</span>
             {(category === "mobile"
               ? MOBILE_TECH_PRESETS
               : ["Next.js", "React", "Node.js", "TypeScript", "Tailwind CSS", "MongoDB", "Stripe", "AWS", "Python", "Docker"]
@@ -914,7 +1193,7 @@ export default function ProjectForm({
                 <div className="flex-1 space-y-2">
                   <input
                     type="text"
-                    placeholder="Feature title (e.g. Real-Time Order Tracking)"
+                    placeholder="Feature title (e.g. Real-Time Multi-Party WebSockets)"
                     value={f.title}
                     onChange={(e) => {
                       const next = [...features];
@@ -1051,12 +1330,12 @@ export default function ProjectForm({
             {saving ? (
               <>
                 <Icon icon="eos-icons:loading" width={18} height={18} className="animate-spin" />
-                <span>Saving Project…</span>
+                <span>Saving Suite…</span>
               </>
             ) : (
               <>
                 <Icon icon="solar:diskette-bold" width={18} height={18} />
-                <span>{projectId ? "Update Project" : "Create & Publish Project"}</span>
+                <span>{projectId ? "Update Project Suite" : "Create & Publish Suite"}</span>
               </>
             )}
           </button>

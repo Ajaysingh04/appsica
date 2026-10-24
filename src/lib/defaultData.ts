@@ -47,6 +47,16 @@ export interface IPortfolioItem {
   category?: string;
   playStoreUrl?: string;
   appStoreUrl?: string;
+  apps?: {
+    role?: string;
+    title: string;
+    summary?: string;
+    playStoreUrl?: string;
+    appStoreUrl?: string;
+    liveLink?: string;
+    icon?: string;
+    images?: string[];
+  }[];
   order?: number;
 }
 

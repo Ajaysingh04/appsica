@@ -34,6 +34,7 @@ export class PortfolioService {
           category: (p as any).category || "",
           playStoreUrl: (p as any).playStoreUrl || "",
           appStoreUrl: (p as any).appStoreUrl || "",
+          apps: (p as any).apps || [],
           isDemo: Boolean(p.isDemo),
           order: p.order,
           published: p.published,

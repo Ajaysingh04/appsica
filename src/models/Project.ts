@@ -8,6 +8,20 @@ const FeatureSchema = new Schema(
   { _id: false }
 );
 
+const AppItemSchema = new Schema(
+  {
+    role: { type: String, default: "customer" }, // "customer" | "vendor" | "delivery" | "custom"
+    title: { type: String, default: "" },
+    summary: { type: String, default: "" },
+    playStoreUrl: { type: String, default: "", trim: true },
+    appStoreUrl: { type: String, default: "", trim: true },
+    liveLink: { type: String, default: "", trim: true },
+    icon: { type: String, default: "" },
+    images: [{ type: String }],
+  },
+  { _id: false }
+);
+
 const ProjectSchema = new Schema(
   {
     title: { type: String, required: true, trim: true },
@@ -22,6 +36,7 @@ const ProjectSchema = new Schema(
     category: { type: String, default: "web", trim: true },
     playStoreUrl: { type: String, default: "", trim: true },
     appStoreUrl: { type: String, default: "", trim: true },
+    apps: [AppItemSchema],
     published: { type: Boolean, default: true },
     isDemo: { type: Boolean, default: false },
     order: { type: Number, default: 0 },

@@ -3,6 +3,17 @@ export interface IProjectFeature {
   description: string;
 }
 
+export interface IProjectApp {
+  role?: "customer" | "vendor" | "delivery" | "custom" | string;
+  title: string;
+  summary?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
+  liveLink?: string;
+  icon?: string;
+  images?: string[];
+}
+
 export interface IProject {
   _id?: string;
   title: string;
@@ -18,6 +29,7 @@ export interface IProject {
   category?: string;
   playStoreUrl?: string;
   appStoreUrl?: string;
+  apps?: IProjectApp[];
   order?: number;
   published?: boolean;
   isDemo?: boolean;

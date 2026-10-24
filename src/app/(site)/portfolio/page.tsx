@@ -107,7 +107,7 @@ const page = async () => {
     await connectDB();
     const docs = await Project.find({ published: { $ne: false }, isDemo: { $ne: true } })
       .sort({ order: 1, createdAt: -1 })
-      .select("title slug summary coverImage images liveLink category playStoreUrl appStoreUrl techStack")
+      .select("title slug summary coverImage images liveLink category playStoreUrl appStoreUrl apps techStack")
       .lean();
 
     if (docs && docs.length > 0) {
@@ -121,7 +121,8 @@ const page = async () => {
         category: item.category || "",
         playStoreUrl: formatLiveUrl(item.playStoreUrl),
         appStoreUrl: formatLiveUrl(item.appStoreUrl),
-        tag: item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
+        apps: Array.isArray(item.apps) ? item.apps : [],
+        tag: (item.apps && item.apps.length > 1) ? `${item.apps.length} Apps Suite` : item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
         techStack: item.techStack || ["React", "Cloud", "Node.js"],
       }));
     } else {
@@ -135,7 +136,8 @@ const page = async () => {
         category: item.category || "",
         playStoreUrl: formatLiveUrl(item.playStoreUrl),
         appStoreUrl: formatLiveUrl(item.appStoreUrl),
-        tag: item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
+        apps: Array.isArray(item.apps) ? item.apps : [],
+        tag: (item.apps && item.apps.length > 1) ? `${item.apps.length} Apps Suite` : item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
         techStack: item.techStack || ["Next.js", "Tailwind", "Cloud"],
       }));
     }
@@ -150,7 +152,8 @@ const page = async () => {
       category: item.category || "",
       playStoreUrl: formatLiveUrl(item.playStoreUrl),
       appStoreUrl: formatLiveUrl(item.appStoreUrl),
-      tag: item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
+      apps: Array.isArray(item.apps) ? item.apps : [],
+      tag: (item.apps && item.apps.length > 1) ? `${item.apps.length} Apps Suite` : item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
       techStack: item.techStack || ["Next.js", "Tailwind", "Cloud"],
     }));
   }

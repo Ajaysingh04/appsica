@@ -17,6 +17,7 @@ export type DashboardProjectCard = {
   category?: string;
   playStoreUrl?: string;
   appStoreUrl?: string;
+  apps?: any[];
   order?: number;
   techStack?: string[];
   summary?: string;
@@ -53,6 +54,7 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
         category: p.category || "",
         playStoreUrl: p.playStoreUrl || "",
         appStoreUrl: p.appStoreUrl || "",
+        apps: Array.isArray(p.apps) ? p.apps : [],
         order: typeof p.order === "number" ? p.order : 0,
         techStack: Array.isArray(p.techStack) ? p.techStack : [],
         summary: p.summary || "",
@@ -127,6 +129,7 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
         category: p.category || "",
         playStoreUrl: p.playStoreUrl || "",
         appStoreUrl: p.appStoreUrl || "",
+        apps: p.apps || [],
         liveLink: p.liveLink || "",
         published: p.published,
         isDemo: Boolean(p.isDemo),
@@ -473,12 +476,17 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
                       <Icon icon="solar:sort-vertical-bold" width={13} height={13} className="text-sky-400" />
                       <span>#{idx + 1}</span>
                     </div>
-                    {p.category === "mobile" && (
+                    {p.apps && p.apps.length > 1 ? (
+                      <span className="rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-2 py-1 text-[10px] font-extrabold text-white shadow-md backdrop-blur-md flex items-center gap-1">
+                        <Icon icon="solar:box-minimalistic-bold" width={11} height={11} />
+                        <span>{p.apps.length} Apps Suite</span>
+                      </span>
+                    ) : p.category === "mobile" ? (
                       <span className="rounded-lg bg-blue-600/90 px-2 py-1 text-[10px] font-extrabold text-white shadow-md backdrop-blur-md flex items-center gap-1">
                         <Icon icon="solar:smartphone-bold" width={11} height={11} />
                         <span>Mobile App</span>
                       </span>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Top Right: Status Badge */}
@@ -512,34 +520,60 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
                     <p className="mt-0.5 text-xs font-mono text-slate-400">/{p.slug}</p>
 
                     {/* Links Row */}
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {p.playStoreUrl && (
-                        <a
-                          href={p.playStoreUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs"
-                        >
-                          <Icon icon="solar:play-bold" width={12} height={12} className="text-emerald-600" />
-                          <span>Google Play</span>
-                          <Icon icon="solar:arrow-right-up-linear" width={10} height={10} />
-                        </a>
-                      )}
-                      {p.liveLink && (
-                        <a
-                          href={p.liveLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 truncate text-xs text-blue-600 font-semibold hover:underline"
-                        >
-                          <Icon icon="solar:link-circle-bold" width={13} height={13} />
-                          <span className="truncate max-w-[120px]">{p.liveLink}</span>
-                          <Icon icon="solar:arrow-right-up-linear" width={10} height={10} />
-                        </a>
-                      )}
-                    </div>
+                    {p.apps && p.apps.length > 1 ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        {p.apps.map((app: any, aIdx: number) => (
+                          app.playStoreUrl ? (
+                            <a
+                              key={aIdx}
+                              href={app.playStoreUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-bold hover:bg-emerald-100 transition shadow-2xs"
+                              title={`${app.title || "App"}: Open on Google Play`}
+                            >
+                              <Icon icon="solar:play-bold" width={10} height={10} className="text-emerald-600" />
+                              <span className="capitalize">{app.role ? `${app.role} App` : app.title}</span>
+                              <Icon icon="solar:arrow-right-up-linear" width={9} height={9} />
+                            </a>
+                          ) : (
+                            <span key={aIdx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold capitalize">
+                              {app.role || app.title}
+                            </span>
+                          )
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {p.playStoreUrl && (
+                          <a
+                            href={p.playStoreUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs"
+                          >
+                            <Icon icon="solar:play-bold" width={12} height={12} className="text-emerald-600" />
+                            <span>Google Play</span>
+                            <Icon icon="solar:arrow-right-up-linear" width={10} height={10} />
+                          </a>
+                        )}
+                        {p.liveLink && (
+                          <a
+                            href={p.liveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 truncate text-xs text-blue-600 font-semibold hover:underline"
+                          >
+                            <Icon icon="solar:link-circle-bold" width={13} height={13} />
+                            <span className="truncate max-w-[120px]">{p.liveLink}</span>
+                            <Icon icon="solar:arrow-right-up-linear" width={10} height={10} />
+                          </a>
+                        )}
+                      </div>
+                    )}
 
                     {/* Tech Stack Tags Preview */}
                     {p.techStack && p.techStack.length > 0 && (
@@ -670,7 +704,14 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
 
                       <td className="px-3 py-3.5">
                         <span className="font-mono text-slate-500">/{p.slug}</span>
-                        {p.playStoreUrl && (
+                        {p.apps && p.apps.length > 1 ? (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            <span className="inline-flex items-center gap-1 rounded bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                              <Icon icon="solar:box-minimalistic-bold" width={10} height={10} />
+                              {p.apps.length} Apps Suite
+                            </span>
+                          </div>
+                        ) : p.playStoreUrl ? (
                           <div className="mt-0.5">
                             <a
                               href={p.playStoreUrl}
@@ -683,7 +724,7 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
                               <span className="truncate max-w-[150px]">Google Play</span>
                             </a>
                           </div>
-                        )}
+                        ) : null}
                         {p.liveLink && (
                           <div>
                             <a

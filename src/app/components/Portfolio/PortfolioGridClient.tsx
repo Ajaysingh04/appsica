@@ -18,6 +18,16 @@ export interface ProjectCardData {
   tag?: string;
   techStack?: string[];
   category?: string;
+  apps?: {
+    role?: "customer" | "vendor" | "delivery" | "custom" | string;
+    title: string;
+    summary?: string;
+    playStoreUrl?: string;
+    appStoreUrl?: string;
+    liveLink?: string;
+    icon?: string;
+    images?: string[];
+  }[];
 }
 
 interface PortfolioGridClientProps {
@@ -36,7 +46,7 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
         return c;
       }
     }
-    if (p.playStoreUrl || p.appStoreUrl) {
+    if ((p.apps && p.apps.length > 0) || p.playStoreUrl || p.appStoreUrl) {
       return "mobile";
     }
     const text = (p.title + " " + (p.summary || "") + " " + (p.techStack || []).join(" ")).toLowerCase();
@@ -196,7 +206,13 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                     {/* Top Status Badge */}
                     <div className="absolute top-3.5 left-3.5 z-10">
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-950/80 backdrop-blur-md border border-white/15 text-slate-200 shadow-md flex items-center gap-1.5">
-                        {project.playStoreUrl ? (
+                        {project.apps && project.apps.length > 1 ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></span>
+                            <Icon icon="solar:box-minimalistic-bold" width={11} height={11} className="text-violet-400" />
+                            <span className="text-violet-300 font-extrabold">{project.apps.length}-in-1 Apps Suite</span>
+                          </>
+                        ) : project.playStoreUrl ? (
                           <>
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                             <Icon icon="solar:play-bold" width={10} height={10} className="text-emerald-400" />
@@ -234,13 +250,28 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
 
                       {/* Description */}
                       {project.summary ? (
-                        <p className="line-clamp-2 text-xs sm:text-sm text-slate-400 leading-relaxed mb-4">
+                        <p className="line-clamp-2 text-xs sm:text-sm text-slate-400 leading-relaxed mb-3">
                           {project.summary}
                         </p>
                       ) : (
-                        <p className="text-xs text-slate-500 italic mb-4">
+                        <p className="text-xs text-slate-500 italic mb-3">
                           Enterprise architectural solution engineered for scale and speed.
                         </p>
+                      )}
+
+                      {/* Multi-App Ecosystem Chips (if 3-in-1 suite) */}
+                      {project.apps && project.apps.length > 1 && (
+                        <div className="mb-3 flex flex-wrap gap-1.5">
+                          {project.apps.map((app, aIdx) => (
+                            <span
+                              key={aIdx}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-500/10 border border-violet-500/20 text-violet-300 text-[10px] font-semibold capitalize"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                              <span>{app.role ? `${app.role} App` : app.title}</span>
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
 
@@ -269,11 +300,29 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                           className="font-bold text-slate-400 hover:text-white transition-colors flex items-center gap-1"
                         >
                           <span>Case Study</span>
-                          <Icon icon="solar:arrow-right-linear" width="14" height="14" />
+                          <Icon icon="solar:arrow-right-linear" width={14} height={14} />
                         </Link>
 
-                                                <div className="flex items-center gap-2">
-                          {project.playStoreUrl && (
+                        <div className="flex items-center gap-1.5">
+                          {project.apps && project.apps.length > 1 ? (
+                            <div className="flex items-center gap-1">
+                              {project.apps
+                                .filter((a) => a.playStoreUrl)
+                                .map((app, aIdx) => (
+                                  <Link
+                                    key={aIdx}
+                                    href={app.playStoreUrl!}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all hover:scale-105"
+                                    title={`${app.title}: Open on Google Play`}
+                                  >
+                                    <Icon icon="solar:play-bold" width={9} height={9} />
+                                    <span className="capitalize">{app.role || "App"}</span>
+                                  </Link>
+                                ))}
+                            </div>
+                          ) : project.playStoreUrl ? (
                             <Link
                               href={project.playStoreUrl}
                               target="_blank"
@@ -284,9 +333,7 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                               <span>Play Store</span>
                               <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
                             </Link>
-                          )}
-
-                          {isExternal && !project.playStoreUrl && (
+                          ) : isExternal ? (
                             <Link
                               href={project.liveLink!}
                               target="_blank"
@@ -296,7 +343,7 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                               <span>Live Demo</span>
                               <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
                             </Link>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </div>

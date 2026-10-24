@@ -91,6 +91,7 @@ export default async function PortfolioProjectPage({ params }: Props) {
     category?: string;
     playStoreUrl?: string;
     appStoreUrl?: string;
+    apps?: any[];
   };
 
   const projectData: ProjectDetailProps = {
@@ -106,6 +107,7 @@ export default async function PortfolioProjectPage({ params }: Props) {
     category: doc.category,
     playStoreUrl: formatLiveUrl(doc.playStoreUrl),
     appStoreUrl: formatLiveUrl(doc.appStoreUrl),
+    apps: Array.isArray(doc.apps) ? doc.apps : [],
   };
 
   return <ProjectDetailClient project={projectData} />;

@@ -66,6 +66,20 @@ export async function PUT(
     const category = body.category !== undefined ? String(body.category).trim() : undefined;
     const playStoreUrl = body.playStoreUrl !== undefined ? String(body.playStoreUrl).trim() : undefined;
     const appStoreUrl = body.appStoreUrl !== undefined ? String(body.appStoreUrl).trim() : undefined;
+    const apps = Array.isArray(body.apps)
+      ? body.apps
+          .map((a: any) => ({
+            role: String(a.role || "customer").trim(),
+            title: String(a.title || "").trim(),
+            summary: String(a.summary || "").trim(),
+            playStoreUrl: String(a.playStoreUrl || "").trim(),
+            appStoreUrl: String(a.appStoreUrl || "").trim(),
+            liveLink: String(a.liveLink || "").trim(),
+            icon: String(a.icon || "").trim(),
+            images: Array.isArray(a.images) ? a.images.map((img: any) => String(img).trim()).filter(Boolean) : [],
+          }))
+          .filter((a: any) => a.title || a.playStoreUrl)
+      : undefined;
     const images = Array.isArray(body.images)
       ? body.images.map((u: unknown) => String(u).trim()).filter(Boolean)
       : undefined;
@@ -111,6 +125,7 @@ export async function PUT(
     if (category !== undefined) updateData.category = category;
     if (playStoreUrl !== undefined) updateData.playStoreUrl = playStoreUrl;
     if (appStoreUrl !== undefined) updateData.appStoreUrl = appStoreUrl;
+    if (apps !== undefined) updateData.apps = apps;
     if (images !== undefined) updateData.images = images;
     if (features !== undefined) updateData.features = features;
     if (techStack !== undefined) updateData.techStack = techStack;
