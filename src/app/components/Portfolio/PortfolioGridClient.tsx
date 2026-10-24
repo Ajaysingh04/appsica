@@ -303,9 +303,9 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                           <Icon icon="solar:arrow-right-linear" width={14} height={14} />
                         </Link>
 
-                        <div className="flex items-center gap-1.5">
-                          {project.apps && project.apps.length > 1 ? (
-                            <div className="flex items-center gap-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {project.apps && project.apps.some((a) => a.playStoreUrl) ? (
+                            <div className="flex flex-wrap items-center gap-1.5">
                               {project.apps
                                 .filter((a) => a.playStoreUrl)
                                 .map((app, aIdx) => (
@@ -314,11 +314,20 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                                     href={app.playStoreUrl!}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all hover:scale-105"
-                                    title={`${app.title}: Open on Google Play`}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-105"
+                                    title={`${app.title || "App"}: Open on Google Play`}
                                   >
-                                    <Icon icon="solar:play-bold" width={9} height={9} />
-                                    <span className="capitalize">{app.role || "App"}</span>
+                                    <Icon icon="solar:play-bold" width={11} height={11} />
+                                    <span>
+                                      {app.role === "vendor"
+                                        ? "Vendor Play Store"
+                                        : app.role === "customer"
+                                        ? "Customer Play Store"
+                                        : app.role === "delivery"
+                                        ? "Delivery Play Store"
+                                        : "Google Play"}
+                                    </span>
+                                    <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
                                   </Link>
                                 ))}
                             </div>

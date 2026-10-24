@@ -231,12 +231,12 @@ export default function ProjectDetailClient({ project }: { project: ProjectDetai
                               className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg hover:shadow-emerald-500/20 transition-all hover:scale-[1.02] cursor-pointer"
                             >
                               <Icon icon="solar:play-bold" width={13} height={13} />
-                              <span>Google Play</span>
+                              <span>Get {app.role ? `${app.role.charAt(0).toUpperCase() + app.role.slice(1)} App` : "App"} on Google Play</span>
                               <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
                             </a>
                           ) : (
                             <div className="text-center py-2 text-xs font-semibold text-slate-500 italic bg-white/[0.02] rounded-xl border border-white/5">
-                              Play Store Available on Request
+                              Play Store Coming Soon
                             </div>
                           )}
                         </div>
@@ -254,12 +254,42 @@ export default function ProjectDetailClient({ project }: { project: ProjectDetai
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-wrap items-center gap-4"
             >
-              {project.playStoreUrl && !hasMultiApps && (
+              {/* Direct Play Store Buttons for Available Apps */}
+              {project.apps && project.apps.some((a) => a.playStoreUrl) ? (
+                project.apps
+                  .filter((a) => a.playStoreUrl)
+                  .map((app, idx) => (
+                    <a
+                      key={idx}
+                      href={app.playStoreUrl!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group cursor-pointer"
+                    >
+                      <Icon icon="solar:play-bold" width={18} height={18} />
+                      <span>
+                        {app.role === "vendor"
+                          ? "Get Vendor App on Google Play"
+                          : app.role === "customer"
+                          ? "Get Customer App on Google Play"
+                          : app.role === "delivery"
+                          ? "Get Delivery App on Google Play"
+                          : `Get ${app.title} on Google Play`}
+                      </span>
+                      <Icon
+                        icon="solar:arrow-right-up-linear"
+                        width={16}
+                        height={16}
+                        className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                      />
+                    </a>
+                  ))
+              ) : project.playStoreUrl ? (
                 <a
                   href={project.playStoreUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group"
+                  className="px-7 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 group cursor-pointer"
                 >
                   <Icon icon="solar:play-bold" width={18} height={18} />
                   <span>Get on Google Play</span>
@@ -270,7 +300,7 @@ export default function ProjectDetailClient({ project }: { project: ProjectDetai
                     className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
                   />
                 </a>
-              )}
+              ) : null}
 
               {project.liveLink && (
                 <a
