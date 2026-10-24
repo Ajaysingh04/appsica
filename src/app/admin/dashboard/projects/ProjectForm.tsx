@@ -184,7 +184,7 @@ export default function ProjectForm({
 
   const [appsList, setAppsList] = useState<SubAppFormState[]>(() => {
     if (initial?.apps && initial.apps.length > 0) {
-      return initial.apps.map((a) => ({
+      const existing: SubAppFormState[] = initial.apps.map((a) => ({
         role: a.role || "customer",
         title: a.title || "App",
         summary: a.summary || "",
@@ -193,6 +193,15 @@ export default function ProjectForm({
         liveLink: a.liveLink || "",
         images: Array.isArray(a.images) ? a.images : [],
       }));
+
+      // Ensure standard 3-in-1 ecosystem roles always exist
+      const rolesPresent = new Set(existing.map((a) => a.role));
+      DEFAULT_ECOSYSTEM_APPS.forEach((def) => {
+        if (!rolesPresent.has(def.role)) {
+          existing.push({ ...def });
+        }
+      });
+      return existing;
     }
     // Pre-populate with 3-in-1 suite: Customer, Vendor, Delivery
     return DEFAULT_ECOSYSTEM_APPS.map((a, i) => ({
@@ -203,6 +212,12 @@ export default function ProjectForm({
   });
 
   const [activeAppIndex, setActiveAppIndex] = useState<number>(0);
+  const [appSavedToast, setAppSavedToast] = useState<{
+    role: string;
+    title: string;
+    nextRole?: string;
+    nextRoleTitle?: string;
+  } | null>(null);
 
   // Fallback single links
   const [playStoreUrl, setPlayStoreUrl] = useState(initial?.playStoreUrl ?? "");
@@ -388,6 +403,53 @@ export default function ProjectForm({
         copy[activeAppIndex] = { ...copy[activeAppIndex], [field]: val };
       }
       return copy;
+    });
+  }
+
+  function handleSwitchAppRole(targetRole: string) {
+    const existingIndex = appsList.findIndex((a) => a.role === targetRole);
+    if (existingIndex !== -1) {
+      setActiveAppIndex(existingIndex);
+    } else {
+      const def = DEFAULT_ECOSYSTEM_APPS.find((d) => d.role === targetRole);
+      const newApp: SubAppFormState = {
+        role: targetRole,
+        title: def?.title || `${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} App`,
+        summary: def?.summary || "",
+        playStoreUrl: "",
+        appStoreUrl: "",
+        liveLink: "",
+        images: [],
+      };
+      setAppsList((prev) => [...prev, newApp]);
+      setActiveAppIndex(appsList.length);
+    }
+    setAppSavedToast(null);
+  }
+
+  function handleSaveCurrentApp() {
+    const current = appsList[activeAppIndex];
+    if (!current) return;
+
+    if (current.playStoreUrl.trim() && !current.playStoreUrl.trim().startsWith("http")) {
+      updateActiveAppField("playStoreUrl", `https://${current.playStoreUrl.trim()}`);
+    }
+
+    const rolesOrder = ["customer", "vendor", "delivery"];
+    const curIdx = rolesOrder.indexOf(current.role);
+    const nextRole = curIdx !== -1 && curIdx < rolesOrder.length - 1 ? rolesOrder[curIdx + 1] : undefined;
+    const nextRoleTitle =
+      nextRole === "vendor"
+        ? "Vendor Partner App"
+        : nextRole === "delivery"
+        ? "Delivery Partner App"
+        : undefined;
+
+    setAppSavedToast({
+      role: current.role,
+      title: current.title,
+      nextRole,
+      nextRoleTitle,
     });
   }
 
@@ -791,20 +853,35 @@ export default function ProjectForm({
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {/* App Role */}
+                  {/* App Role Switcher */}
                   <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      App Role / Type
+                    <label className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-800">
+                      <span>Select App Role to Configure *</span>
+                      <span className="text-[11px] font-semibold normal-case text-blue-600">
+                        Switches between Customer, Vendor & Delivery
+                      </span>
                     </label>
                     <select
                       value={currentApp.role}
-                      onChange={(e) => updateActiveAppField("role", e.target.value)}
-                      className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 cursor-pointer"
+                      onChange={(e) => handleSwitchAppRole(e.target.value)}
+                      className="admin-input mt-1.5 w-full rounded-xl border-2 border-blue-500 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-900 shadow-xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 cursor-pointer"
                     >
-                      <option value="customer">📱 Customer / User App</option>
-                      <option value="vendor">🏪 Vendor / Store Partner App</option>
-                      <option value="delivery">🛵 Delivery Partner / Rider App</option>
-                      <option value="custom">⚡ Custom / Admin App</option>
+                      <option value="customer">
+                        📱 Customer / User App {appsList.find((a) => a.role === "customer")?.playStoreUrl ? "— ✅ (Link Added)" : "— ⚪ (Link Empty)"}
+                      </option>
+                      <option value="vendor">
+                        🏪 Vendor / Store Partner App {appsList.find((a) => a.role === "vendor")?.playStoreUrl ? "— ✅ (Link Added)" : "— ⚪ (Link Empty)"}
+                      </option>
+                      <option value="delivery">
+                        🛵 Delivery Partner / Rider App {appsList.find((a) => a.role === "delivery")?.playStoreUrl ? "— ✅ (Link Added)" : "— ⚪ (Link Empty)"}
+                      </option>
+                      {appsList
+                        .filter((a) => !["customer", "vendor", "delivery"].includes(a.role))
+                        .map((a) => (
+                          <option key={a.role} value={a.role}>
+                            ⚡ {a.title} {a.playStoreUrl ? "— ✅ (Link Added)" : "— ⚪ (Link Empty)"}
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -818,7 +895,7 @@ export default function ProjectForm({
                       value={currentApp.title}
                       onChange={(e) => updateActiveAppField("title", e.target.value)}
                       placeholder="e.g. Customer App or Vendor Partner App"
-                      className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15"
+                      className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15"
                       required
                     />
                   </div>
@@ -838,11 +915,11 @@ export default function ProjectForm({
                   </div>
 
                   {/* Direct Play Store Link for this App */}
-                  <div className="sm:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                        <span className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
-                          <Icon icon="solar:play-bold" width={12} height={12} />
+                  <div className="sm:col-span-2 rounded-2xl border-2 border-emerald-300 bg-emerald-50/50 p-4 shadow-2xs">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="flex items-center gap-2 text-xs font-extrabold text-slate-900">
+                        <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                          <Icon icon="solar:play-bold" width={14} height={14} />
                         </span>
                         <span>Google Play Store URL for {currentApp.title}</span>
                       </label>
@@ -851,20 +928,57 @@ export default function ProjectForm({
                           href={currentApp.playStoreUrl.startsWith("http") ? currentApp.playStoreUrl : `https://${currentApp.playStoreUrl}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-300 hover:bg-emerald-100"
                         >
                           <span>Test Link</span>
                           <Icon icon="solar:arrow-right-up-linear" width={12} height={12} />
                         </a>
                       )}
                     </div>
+
                     <input
                       type="url"
                       value={currentApp.playStoreUrl}
                       onChange={(e) => updateActiveAppField("playStoreUrl", e.target.value)}
-                      placeholder={`https://play.google.com/store/apps/details?id=com.${currentApp.role}.app`}
-                      className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none"
+                      placeholder={`Enter Google Play Store link for ${currentApp.title} (e.g. https://play.google.com/store/apps/details?id=...)`}
+                      className="admin-input mt-1 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 shadow-2xs focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/15 outline-none"
                     />
+
+                    {/* Dedicated Save Button & Next Role Switcher */}
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-emerald-200">
+                      <button
+                        type="button"
+                        onClick={handleSaveCurrentApp}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md hover:shadow-emerald-500/25 transition-all hover:scale-[1.02] cursor-pointer"
+                      >
+                        <Icon icon="solar:diskette-bold" width={16} height={16} />
+                        <span>Save {currentApp.title} Link</span>
+                      </button>
+
+                      {appSavedToast && appSavedToast.role === currentApp.role ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300">
+                            <Icon icon="solar:check-circle-bold" width={16} height={16} className="text-emerald-600" />
+                            <span>{currentApp.title} Link Saved!</span>
+                          </span>
+
+                          {appSavedToast.nextRole && (
+                            <button
+                              type="button"
+                              onClick={() => handleSwitchAppRole(appSavedToast.nextRole!)}
+                              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition hover:scale-105 cursor-pointer"
+                            >
+                              <span>Next: Switch to {appSavedToast.nextRoleTitle}</span>
+                              <Icon icon="solar:arrow-right-linear" width={14} height={14} />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-500">
+                          Click &quot;Save&quot; after pasting link to record this app.
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Apple App Store Link for this App */}
@@ -959,6 +1073,98 @@ export default function ProjectForm({
                 </div>
               </div>
             )}
+
+            {/* Ecosystem App Links Status Checklist Overview */}
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3 border-b border-slate-200 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                    <Icon icon="solar:checklist-minimalistic-bold" width={14} height={14} />
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      Ecosystem App Links Status Checklist
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Verify Customer, Vendor & Delivery apps before saving the whole project.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+                  {appsList.filter((a) => a.playStoreUrl).length} of {appsList.length} Links Saved
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {appsList.map((app, idx) => {
+                  const hasLink = Boolean(app.playStoreUrl);
+                  const isCurrent = activeAppIndex === idx;
+                  const roleColor =
+                    app.role === "customer"
+                      ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                      : app.role === "vendor"
+                      ? "text-amber-700 bg-amber-50 border-amber-200"
+                      : app.role === "delivery"
+                      ? "text-blue-700 bg-blue-50 border-blue-200"
+                      : "text-purple-700 bg-purple-50 border-purple-200";
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setActiveAppIndex(idx);
+                        setAppSavedToast(null);
+                      }}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                        isCurrent
+                          ? "bg-white border-blue-600 shadow-md ring-2 ring-blue-500/20 scale-[1.02]"
+                          : "bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase ${roleColor}`}>
+                          {app.role} App
+                        </span>
+                        {hasLink ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            <Icon icon="solar:check-circle-bold" width={11} height={11} className="text-emerald-600" />
+                            <span>Saved ✅</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                            Link Pending
+                          </span>
+                        )}
+                      </div>
+
+                      <h5 className="text-xs font-bold text-slate-900 truncate mb-1">
+                        {app.title}
+                      </h5>
+
+                      <p className="text-[11px] text-slate-500 font-mono truncate" title={app.playStoreUrl || "No link added yet"}>
+                        {app.playStoreUrl || "Click to add Play Store link"}
+                      </p>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 font-medium">
+                          {app.images?.length ? `${app.images.length} screenshots` : "0 screenshots"}
+                        </span>
+                        <span className="font-bold text-blue-600 flex items-center gap-0.5">
+                          {isCurrent ? "Currently Editing" : "Configure ➔"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200 flex items-center gap-2">
+                <Icon icon="solar:info-circle-bold" width={16} height={16} className="text-blue-600 shrink-0" />
+                <span>
+                  <strong>Workflow Tip:</strong> Har role ke liye link add karke <em>&quot;Save Link&quot;</em> dabayein, fir sabhi apps config hone ke baad page ke sabse neeche jakar <strong>&quot;Update Project Suite&quot;</strong> par click karein.
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>
