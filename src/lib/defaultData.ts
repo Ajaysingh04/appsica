@@ -37,10 +37,16 @@ export interface IPortfolioItem {
   title: string;
   slug: string;
   summary?: string;
+  description?: string;
   coverImage: string;
   image?: string;
   images?: string[];
+  features?: { title: string; description: string }[];
+  techStack?: string[];
   liveLink?: string;
+  category?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
   order?: number;
 }
 

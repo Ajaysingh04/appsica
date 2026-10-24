@@ -14,6 +14,9 @@ export type DashboardProjectCard = {
   published: boolean;
   isDemo?: boolean;
   liveLink?: string;
+  category?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
   order?: number;
   techStack?: string[];
   summary?: string;
@@ -47,6 +50,9 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
         published: p.published,
         isDemo: Boolean(p.isDemo),
         liveLink: p.liveLink || "",
+        category: p.category || "",
+        playStoreUrl: p.playStoreUrl || "",
+        appStoreUrl: p.appStoreUrl || "",
         order: typeof p.order === "number" ? p.order : 0,
         techStack: Array.isArray(p.techStack) ? p.techStack : [],
         summary: p.summary || "",
@@ -118,6 +124,9 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
         images: p.images?.length ? p.images : p.coverImage ? [p.coverImage] : [],
         features: p.features || [],
         techStack: p.techStack || [],
+        category: p.category || "",
+        playStoreUrl: p.playStoreUrl || "",
+        appStoreUrl: p.appStoreUrl || "",
         liveLink: p.liveLink || "",
         published: p.published,
         isDemo: Boolean(p.isDemo),
@@ -458,10 +467,18 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-80" />
 
-                  {/* Top Left: Position Badge */}
-                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 rounded-lg bg-slate-900/90 px-2.5 py-1 text-xs font-bold text-white shadow-md backdrop-blur-md border border-white/20">
-                    <Icon icon="solar:sort-vertical-bold" width={14} height={14} className="text-sky-400" />
-                    <span>#{idx + 1}</span>
+                  {/* Top Left: Position Badge & Category */}
+                  <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 rounded-lg bg-slate-900/90 px-2 py-1 text-xs font-bold text-white shadow-md backdrop-blur-md border border-white/20">
+                      <Icon icon="solar:sort-vertical-bold" width={13} height={13} className="text-sky-400" />
+                      <span>#{idx + 1}</span>
+                    </div>
+                    {p.category === "mobile" && (
+                      <span className="rounded-lg bg-blue-600/90 px-2 py-1 text-[10px] font-extrabold text-white shadow-md backdrop-blur-md flex items-center gap-1">
+                        <Icon icon="solar:smartphone-bold" width={11} height={11} />
+                        <span>Mobile App</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Top Right: Status Badge */}
@@ -487,23 +504,42 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
                 {/* Card Content */}
                 <div className="flex flex-1 flex-col justify-between p-5">
                   <div onClick={() => void openEdit(p._id)} className="cursor-pointer">
-                    <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                      {p.title}
-                    </h2>
-                    <p className="mt-1 text-xs font-mono text-slate-400">/{p.slug}</p>
-                    {p.liveLink && (
-                      <a
-                        href={p.liveLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="mt-1.5 inline-flex items-center gap-1 truncate text-xs text-blue-600 font-semibold hover:underline"
-                      >
-                        <Icon icon="solar:link-circle-bold" width={14} height={14} />
-                        <span className="truncate">{p.liveLink}</span>
-                        <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
-                      </a>
-                    )}
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                        {p.title}
+                      </h2>
+                    </div>
+                    <p className="mt-0.5 text-xs font-mono text-slate-400">/{p.slug}</p>
+
+                    {/* Links Row */}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {p.playStoreUrl && (
+                        <a
+                          href={p.playStoreUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold hover:bg-emerald-100 transition shadow-2xs"
+                        >
+                          <Icon icon="solar:play-bold" width={12} height={12} className="text-emerald-600" />
+                          <span>Google Play</span>
+                          <Icon icon="solar:arrow-right-up-linear" width={10} height={10} />
+                        </a>
+                      )}
+                      {p.liveLink && (
+                        <a
+                          href={p.liveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 truncate text-xs text-blue-600 font-semibold hover:underline"
+                        >
+                          <Icon icon="solar:link-circle-bold" width={13} height={13} />
+                          <span className="truncate max-w-[120px]">{p.liveLink}</span>
+                          <Icon icon="solar:arrow-right-up-linear" width={10} height={10} />
+                        </a>
+                      )}
+                    </div>
 
                     {/* Tech Stack Tags Preview */}
                     {p.techStack && p.techStack.length > 0 && (
@@ -634,6 +670,20 @@ function DashboardInner({ initialProjects }: { initialProjects: DashboardProject
 
                       <td className="px-3 py-3.5">
                         <span className="font-mono text-slate-500">/{p.slug}</span>
+                        {p.playStoreUrl && (
+                          <div className="mt-0.5">
+                            <a
+                              href={p.playStoreUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline"
+                            >
+                              <Icon icon="solar:play-bold" width={11} height={11} />
+                              <span className="truncate max-w-[150px]">Google Play</span>
+                            </a>
+                          </div>
+                        )}
                         {p.liveLink && (
                           <div>
                             <a

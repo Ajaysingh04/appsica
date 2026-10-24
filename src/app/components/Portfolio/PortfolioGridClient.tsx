@@ -11,7 +11,10 @@ export interface ProjectCardData {
   slug: string;
   summary?: string;
   coverImage: string;
+  images?: string[];
   liveLink?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
   tag?: string;
   techStack?: string[];
   category?: string;
@@ -25,8 +28,17 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Determine category categories dynamically or by keywords
+  // Determine category dynamically with explicit category support
   const getProjectCategory = (p: ProjectCardData) => {
+    if (p.category) {
+      const c = p.category.toLowerCase().trim();
+      if (c === "mobile" || c === "enterprise" || c === "ecommerce" || c === "web") {
+        return c;
+      }
+    }
+    if (p.playStoreUrl || p.appStoreUrl) {
+      return "mobile";
+    }
     const text = (p.title + " " + (p.summary || "") + " " + (p.techStack || []).join(" ")).toLowerCase();
     if (text.includes("mobile") || text.includes("app") || text.includes("flutter") || text.includes("react native") || text.includes("ios") || text.includes("android")) {
       return "mobile";
@@ -184,7 +196,13 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                     {/* Top Status Badge */}
                     <div className="absolute top-3.5 left-3.5 z-10">
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-slate-950/80 backdrop-blur-md border border-white/15 text-slate-200 shadow-md flex items-center gap-1.5">
-                        {isExternal ? (
+                        {project.playStoreUrl ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <Icon icon="solar:play-bold" width={10} height={10} className="text-emerald-400" />
+                            <span className="text-emerald-400 font-bold">Google Play App</span>
+                          </>
+                        ) : isExternal ? (
                           <>
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                             <span className="text-emerald-400 font-bold">Live App</span>
@@ -254,17 +272,32 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                           <Icon icon="solar:arrow-right-linear" width="14" height="14" />
                         </Link>
 
-                        {isExternal && (
-                          <Link
-                            href={project.liveLink!}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(0,82,204,0.3)] transition-all"
-                          >
-                            <span>Live Demo</span>
-                            <Icon icon="solar:arrow-right-up-linear" width="13" height="13" />
-                          </Link>
-                        )}
+                                                <div className="flex items-center gap-2">
+                          {project.playStoreUrl && (
+                            <Link
+                              href={project.playStoreUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.35)] transition-all hover:scale-105"
+                            >
+                              <Icon icon="solar:play-bold" width={11} height={11} />
+                              <span>Play Store</span>
+                              <Icon icon="solar:arrow-right-up-linear" width={11} height={11} />
+                            </Link>
+                          )}
+
+                          {isExternal && !project.playStoreUrl && (
+                            <Link
+                              href={project.liveLink!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-[0_0_15px_rgba(0,82,204,0.3)] transition-all hover:scale-105"
+                            >
+                              <span>Live Demo</span>
+                              <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

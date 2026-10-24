@@ -78,6 +78,9 @@ export async function PUT(
     const techStack = Array.isArray(body.techStack)
       ? body.techStack.map((t: unknown) => String(t).trim()).filter(Boolean)
       : [];
+    const category = body.category !== undefined ? String(body.category).trim() : undefined;
+    const playStoreUrl = body.playStoreUrl !== undefined ? String(body.playStoreUrl).trim() : undefined;
+    const appStoreUrl = body.appStoreUrl !== undefined ? String(body.appStoreUrl).trim() : undefined;
     const published = Boolean(body.published);
     const isDemo = body.isDemo !== undefined ? Boolean(body.isDemo) : undefined;
     const order = Number(body.order) || 0;
@@ -109,6 +112,15 @@ export async function PUT(
       published,
       order,
     };
+    if (category !== undefined) {
+      updateData.category = category;
+    }
+    if (playStoreUrl !== undefined) {
+      updateData.playStoreUrl = playStoreUrl;
+    }
+    if (appStoreUrl !== undefined) {
+      updateData.appStoreUrl = appStoreUrl;
+    }
     if (isDemo !== undefined) {
       updateData.isDemo = isDemo;
     }

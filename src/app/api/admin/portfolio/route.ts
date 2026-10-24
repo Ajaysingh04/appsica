@@ -39,8 +39,24 @@ export async function POST(request: Request) {
     const title = String(body.title || "").trim();
     let slug = String(body.slug || "").trim().toLowerCase();
     const summary = String(body.summary || "").trim();
+    const description = String(body.description || "").trim();
     const coverImage = String(body.coverImage || "").trim();
     const liveLink = String(body.liveLink || "").trim();
+    const category = String(body.category || "web").trim();
+    const playStoreUrl = String(body.playStoreUrl || "").trim();
+    const appStoreUrl = String(body.appStoreUrl || "").trim();
+    const images = Array.isArray(body.images)
+      ? body.images.map((u: unknown) => String(u).trim()).filter(Boolean)
+      : [];
+    const features = Array.isArray(body.features)
+      ? body.features.map((f: { title?: string; description?: string }) => ({
+          title: String(f.title || "").trim(),
+          description: String(f.description || "").trim(),
+        }))
+      : [];
+    const techStack = Array.isArray(body.techStack)
+      ? body.techStack.map((t: unknown) => String(t).trim()).filter(Boolean)
+      : [];
     const published = Boolean(body.published);
     const isDemo = Boolean(body.isDemo);
     const order = Number(body.order) || 0;
@@ -58,8 +74,15 @@ export async function POST(request: Request) {
       title,
       slug,
       summary,
+      description,
       coverImage,
+      images,
+      features: features.filter((f: { title: string }) => f.title),
+      techStack,
       liveLink,
+      category,
+      playStoreUrl,
+      appStoreUrl,
       published,
       isDemo,
       order,

@@ -60,8 +60,26 @@ export async function PUT(
     const title = String(body.title || "").trim();
     let slug = String(body.slug || "").trim().toLowerCase();
     const summary = String(body.summary || "").trim();
+    const description = body.description !== undefined ? String(body.description).trim() : undefined;
     const coverImage = String(body.coverImage || "").trim();
     const liveLink = String(body.liveLink || "").trim();
+    const category = body.category !== undefined ? String(body.category).trim() : undefined;
+    const playStoreUrl = body.playStoreUrl !== undefined ? String(body.playStoreUrl).trim() : undefined;
+    const appStoreUrl = body.appStoreUrl !== undefined ? String(body.appStoreUrl).trim() : undefined;
+    const images = Array.isArray(body.images)
+      ? body.images.map((u: unknown) => String(u).trim()).filter(Boolean)
+      : undefined;
+    const features = Array.isArray(body.features)
+      ? body.features
+          .map((f: { title?: string; description?: string }) => ({
+            title: String(f.title || "").trim(),
+            description: String(f.description || "").trim(),
+          }))
+          .filter((f: { title: string }) => f.title)
+      : undefined;
+    const techStack = Array.isArray(body.techStack)
+      ? body.techStack.map((t: unknown) => String(t).trim()).filter(Boolean)
+      : undefined;
     const published = Boolean(body.published);
     const isDemo = body.isDemo !== undefined ? Boolean(body.isDemo) : undefined;
     const order = Number(body.order) || 0;
@@ -89,6 +107,13 @@ export async function PUT(
       published,
       order,
     };
+    if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    if (playStoreUrl !== undefined) updateData.playStoreUrl = playStoreUrl;
+    if (appStoreUrl !== undefined) updateData.appStoreUrl = appStoreUrl;
+    if (images !== undefined) updateData.images = images;
+    if (features !== undefined) updateData.features = features;
+    if (techStack !== undefined) updateData.techStack = techStack;
     if (isDemo !== undefined) {
       updateData.isDemo = isDemo;
     }

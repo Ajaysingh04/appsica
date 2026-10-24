@@ -15,8 +15,12 @@ export interface IProject {
   features?: IProjectFeature[];
   techStack?: string[];
   liveLink?: string;
+  category?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
   order?: number;
   published?: boolean;
+  isDemo?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

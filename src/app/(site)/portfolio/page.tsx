@@ -107,7 +107,7 @@ const page = async () => {
     await connectDB();
     const docs = await Project.find({ published: { $ne: false }, isDemo: { $ne: true } })
       .sort({ order: 1, createdAt: -1 })
-      .select("title slug summary coverImage liveLink techStack")
+      .select("title slug summary coverImage images liveLink category playStoreUrl appStoreUrl techStack")
       .lean();
 
     if (docs && docs.length > 0) {
@@ -116,8 +116,12 @@ const page = async () => {
         slug: item.slug,
         summary: item.summary,
         coverImage: item.coverImage,
+        images: item.images || [],
         liveLink: formatLiveUrl(item.liveLink),
-        tag: item.liveLink ? "Live App" : "Case Study",
+        category: item.category || "",
+        playStoreUrl: formatLiveUrl(item.playStoreUrl),
+        appStoreUrl: formatLiveUrl(item.appStoreUrl),
+        tag: item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
         techStack: item.techStack || ["React", "Cloud", "Node.js"],
       }));
     } else {
@@ -126,9 +130,13 @@ const page = async () => {
         slug: item.slug,
         summary: item.summary,
         coverImage: item.coverImage || item.image || "",
+        images: item.images || [],
         liveLink: formatLiveUrl(item.liveLink),
-        tag: item.liveLink ? "Live App" : "Case Study",
-        techStack: ["Next.js", "Tailwind", "Cloud"],
+        category: item.category || "",
+        playStoreUrl: formatLiveUrl(item.playStoreUrl),
+        appStoreUrl: formatLiveUrl(item.appStoreUrl),
+        tag: item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
+        techStack: item.techStack || ["Next.js", "Tailwind", "Cloud"],
       }));
     }
   } catch {
@@ -137,9 +145,13 @@ const page = async () => {
       slug: item.slug,
       summary: item.summary,
       coverImage: item.coverImage || item.image || "",
+      images: item.images || [],
       liveLink: formatLiveUrl(item.liveLink),
-      tag: item.liveLink ? "Live App" : "Case Study",
-      techStack: ["Next.js", "Tailwind", "Cloud"],
+      category: item.category || "",
+      playStoreUrl: formatLiveUrl(item.playStoreUrl),
+      appStoreUrl: formatLiveUrl(item.appStoreUrl),
+      tag: item.playStoreUrl ? "Google Play" : item.liveLink ? "Live App" : "Case Study",
+      techStack: item.techStack || ["Next.js", "Tailwind", "Cloud"],
     }));
   }
 

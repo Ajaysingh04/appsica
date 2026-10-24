@@ -16,6 +16,9 @@ export interface ProjectDetailProps {
   features?: { title: string; description?: string }[];
   techStack?: string[];
   liveLink?: string;
+  category?: string;
+  playStoreUrl?: string;
+  appStoreUrl?: string;
 }
 
 export default function ProjectDetailClient({ project }: { project: ProjectDetailProps }) {
