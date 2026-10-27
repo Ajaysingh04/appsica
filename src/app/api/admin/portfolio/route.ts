@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/requireAdmin";
 import connectDB from "@/lib/mongodb";
 import Project from "@/models/Project";
+import { revalidatePath } from "next/cache";
+
+export const dynamic = "force-dynamic";
 
 function slugify(input: string) {
   return input
@@ -37,28 +40,63 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const title = String(body.title || "").trim();
-    let slug = String(body.slug || "").trim().toLowerCase();
+    const rawSlug = String(body.slug || "").trim();
+    let slug = rawSlug ? slugify(rawSlug) : slugify(title);
     const summary = String(body.summary || "").trim();
     const description = String(body.description || "").trim();
     const coverImage = String(body.coverImage || "").trim();
-    const liveLink = String(body.liveLink || "").trim();
-    const category = String(body.category || "web").trim();
-    const playStoreUrl = String(body.playStoreUrl || "").trim();
-    const appStoreUrl = String(body.appStoreUrl || "").trim();
+
+    let liveLink = String(body.liveLink || "").trim();
+    if (liveLink && !/^https?:\/\//i.test(liveLink)) {
+      liveLink = `https://${liveLink}`;
+    }
+    let playStoreUrl = String(body.playStoreUrl || "").trim();
+    if (playStoreUrl && !/^https?:\/\//i.test(playStoreUrl)) {
+      playStoreUrl = `https://${playStoreUrl}`;
+    }
+    let appStoreUrl = String(body.appStoreUrl || "").trim();
+    if (appStoreUrl && !/^https?:\/\//i.test(appStoreUrl)) {
+      appStoreUrl = `https://${appStoreUrl}`;
+    }
+
     const apps = Array.isArray(body.apps)
       ? body.apps
-          .map((a: any) => ({
-            role: String(a.role || "customer").trim(),
-            title: String(a.title || "").trim(),
-            summary: String(a.summary || "").trim(),
-            playStoreUrl: String(a.playStoreUrl || "").trim(),
-            appStoreUrl: String(a.appStoreUrl || "").trim(),
-            liveLink: String(a.liveLink || "").trim(),
-            icon: String(a.icon || "").trim(),
-            images: Array.isArray(a.images) ? a.images.map((img: any) => String(img).trim()).filter(Boolean) : [],
-          }))
-          .filter((a: any) => a.title || a.playStoreUrl)
+          .map((a: any) => {
+            let appLiveLink = String(a.liveLink || "").trim();
+            if (appLiveLink && !/^https?:\/\//i.test(appLiveLink)) appLiveLink = `https://${appLiveLink}`;
+            let appPlayStore = String(a.playStoreUrl || "").trim();
+            if (appPlayStore && !/^https?:\/\//i.test(appPlayStore)) appPlayStore = `https://${appPlayStore}`;
+            let appAppStore = String(a.appStoreUrl || "").trim();
+            if (appAppStore && !/^https?:\/\//i.test(appAppStore)) appAppStore = `https://${appAppStore}`;
+
+            return {
+              role: String(a.role || "customer").trim(),
+              title: String(a.title || "").trim(),
+              summary: String(a.summary || "").trim(),
+              playStoreUrl: appPlayStore,
+              appStoreUrl: appAppStore,
+              liveLink: appLiveLink,
+              icon: String(a.icon || "").trim(),
+              images: Array.isArray(a.images) ? a.images.map((img: any) => String(img).trim()).filter(Boolean) : [],
+            };
+          })
+          .filter((a: any) => a.title || a.playStoreUrl || a.liveLink || a.appStoreUrl)
       : [];
+
+    if (!liveLink && apps.length > 0) {
+      const found = apps.find((a: any) => a.liveLink);
+      if (found) liveLink = found.liveLink;
+    }
+    if (!playStoreUrl && apps.length > 0) {
+      const found = apps.find((a: any) => a.playStoreUrl);
+      if (found) playStoreUrl = found.playStoreUrl;
+    }
+    if (!appStoreUrl && apps.length > 0) {
+      const found = apps.find((a: any) => a.appStoreUrl);
+      if (found) appStoreUrl = found.appStoreUrl;
+    }
+
+    const category = String(body.category || "web").trim();
     const images = Array.isArray(body.images)
       ? body.images.map((u: unknown) => String(u).trim()).filter(Boolean)
       : [];
@@ -102,6 +140,10 @@ export async function POST(request: Request) {
       isDemo,
       order,
     });
+
+    revalidatePath("/portfolio");
+    revalidatePath("/");
+    revalidatePath(`/portfolio/${project.slug}`);
 
     return NextResponse.json({ project });
   } catch (e: unknown) {

@@ -208,6 +208,7 @@ export default function ProjectForm({
       ...a,
       playStoreUrl: i === 0 ? initial?.playStoreUrl || "" : "",
       appStoreUrl: i === 0 ? initial?.appStoreUrl || "" : "",
+      liveLink: i === 0 ? initial?.liveLink || "" : "",
     }));
   });
 
@@ -404,6 +405,14 @@ export default function ProjectForm({
       }
       return copy;
     });
+    // Synchronize primary link state if primary state is not set or matches current app
+    if (field === "liveLink") {
+      setLiveLink((prev) => (!prev || prev === appsList[activeAppIndex]?.liveLink ? val : prev));
+    } else if (field === "playStoreUrl") {
+      setPlayStoreUrl((prev) => (!prev || prev === appsList[activeAppIndex]?.playStoreUrl ? val : prev));
+    } else if (field === "appStoreUrl") {
+      setAppStoreUrl((prev) => (!prev || prev === appsList[activeAppIndex]?.appStoreUrl ? val : prev));
+    }
   }
 
   function handleSwitchAppRole(targetRole: string) {
@@ -431,8 +440,14 @@ export default function ProjectForm({
     const current = appsList[activeAppIndex];
     if (!current) return;
 
-    if (current.playStoreUrl.trim() && !current.playStoreUrl.trim().startsWith("http")) {
+    if (current.playStoreUrl?.trim() && !current.playStoreUrl.trim().startsWith("http")) {
       updateActiveAppField("playStoreUrl", `https://${current.playStoreUrl.trim()}`);
+    }
+    if (current.appStoreUrl?.trim() && !current.appStoreUrl.trim().startsWith("http")) {
+      updateActiveAppField("appStoreUrl", `https://${current.appStoreUrl.trim()}`);
+    }
+    if (current.liveLink?.trim() && !current.liveLink.trim().startsWith("http")) {
+      updateActiveAppField("liveLink", `https://${current.liveLink.trim()}`);
     }
 
     const rolesOrder = ["customer", "vendor", "delivery"];
@@ -481,7 +496,19 @@ export default function ProjectForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage(null);
-    const finalSlug = slug.trim() || slugify(title);
+
+    function cleanSlug(input: string): string {
+      return input
+        .replace(/^https?:\/\/[^/]+/i, "")
+        .replace(/^\/?portfolio\/?/i, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/[\s_-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    const finalSlug = cleanSlug(slug) || slugify(title);
     const techStack = techStackRaw
       .split(",")
       .map((t) => t.trim())
@@ -505,20 +532,32 @@ export default function ProjectForm({
       return;
     }
 
-    // Determine primary Play Store URL
+    // Determine primary links across form & sub-apps
     const activeAppWithPlayStore = appsList.find((a) => a.playStoreUrl?.trim());
-    const primaryPlayStore = isMultiAppSuite
-      ? activeAppWithPlayStore?.playStoreUrl?.trim() || ""
-      : playStoreUrl.trim();
+    const primaryPlayStore = (
+      playStoreUrl.trim() ||
+      (isMultiAppSuite ? activeAppWithPlayStore?.playStoreUrl?.trim() || "" : "")
+    );
 
     const activeAppWithAppStore = appsList.find((a) => a.appStoreUrl?.trim());
-    const primaryAppStore = isMultiAppSuite
-      ? activeAppWithAppStore?.appStoreUrl?.trim() || ""
-      : appStoreUrl.trim();
+    const primaryAppStore = (
+      appStoreUrl.trim() ||
+      (isMultiAppSuite ? activeAppWithAppStore?.appStoreUrl?.trim() || "" : "")
+    );
+
+    const activeAppWithLiveLink = appsList.find((a) => a.liveLink?.trim());
+    const primaryLiveLink = (
+      liveLink.trim() ||
+      (isMultiAppSuite ? activeAppWithLiveLink?.liveLink?.trim() || "" : "")
+    );
 
     // Only persist apps array if at least one sub-app has a link or screenshot
     const hasAnySubAppContent = appsList.some(
-      (a) => Boolean(a.playStoreUrl?.trim()) || Boolean(a.appStoreUrl?.trim()) || Boolean(a.images?.length)
+      (a) =>
+        Boolean(a.playStoreUrl?.trim()) ||
+        Boolean(a.appStoreUrl?.trim()) ||
+        Boolean(a.liveLink?.trim()) ||
+        Boolean(a.images?.length)
     );
 
     setSaving(true);
@@ -531,7 +570,7 @@ export default function ProjectForm({
         category,
         playStoreUrl: primaryPlayStore,
         appStoreUrl: primaryAppStore,
-        liveLink: liveLink.trim(),
+        liveLink: primaryLiveLink,
         coverImage: masterCover,
         images: combinedImages,
         apps: isMultiAppSuite && hasAnySubAppContent ? appsList : [],
@@ -690,7 +729,7 @@ export default function ProjectForm({
           {/* URL Slug */}
           <div className="sm:col-span-2">
             <label className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
-              <span>URL Slug</span>
+              <span>URL Slug (Project Route)</span>
               <span className="text-[11px] font-normal normal-case text-slate-500">
                 Auto-generated or custom
               </span>
@@ -705,6 +744,17 @@ export default function ProjectForm({
                 onChange={(e) => {
                   setSlugTouched(true);
                   setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"));
+                }}
+                onBlur={() => {
+                  const cleaned = slug
+                    .replace(/^https?:\/\/[^/]+/i, "")
+                    .replace(/^\/?portfolio\/?/i, "")
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^\w\s-]/g, "")
+                    .replace(/[\s_-]+/g, "-")
+                    .replace(/^-+|-+$/g, "");
+                  setSlug(cleaned);
                 }}
                 placeholder="quickbite-food-delivery-ecosystem"
                 className="admin-input w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-24 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
@@ -736,6 +786,128 @@ export default function ProjectForm({
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="Architectural deep dive covering the 3 interconnected apps, real-time WebSocket dispatch engine, live geolocation tracking, and cloud scalability..."
+              className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION: Project URLs & External Live Links */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800">
+            <Icon icon="solar:link-circle-bold-duotone" width={18} height={18} className="text-blue-600" />
+            <span>Project URLs & Live External Links</span>
+          </p>
+          <span className="text-[11px] font-medium text-slate-500">
+            Live Website, Demo, Play Store & App Store links
+          </span>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Live Website / Demo URL */}
+          <div className="sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+                <Icon icon="solar:global-bold" width={15} height={15} className="text-blue-600" />
+                <span>Live Project / Website / Demo URL</span>
+              </label>
+              {liveLink && (
+                <a
+                  href={liveLink.startsWith("http") ? liveLink : `https://${liveLink}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  <span>Test Link</span>
+                  <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
+                </a>
+              )}
+            </div>
+            <div className="relative mt-1.5">
+              <input
+                type="text"
+                value={liveLink}
+                onChange={(e) => setLiveLink(e.target.value)}
+                onBlur={() => {
+                  const trimmed = liveLink.trim();
+                  if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+                    setLiveLink(`https://${trimmed}`);
+                  }
+                }}
+                placeholder="https://example.com or https://clientproject.com"
+                className="admin-input w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
+              />
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Primary external URL used across portfolio cards and live project buttons.
+            </p>
+          </div>
+
+          {/* Google Play Store URL */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+                <Icon icon="solar:smartphone-bold" width={15} height={15} className="text-emerald-600" />
+                <span>Google Play Store URL</span>
+              </label>
+              {playStoreUrl && (
+                <a
+                  href={playStoreUrl.startsWith("http") ? playStoreUrl : `https://${playStoreUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline"
+                >
+                  <span>Test Link</span>
+                  <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
+                </a>
+              )}
+            </div>
+            <input
+              type="text"
+              value={playStoreUrl}
+              onChange={(e) => setPlayStoreUrl(e.target.value)}
+              onBlur={() => {
+                const trimmed = playStoreUrl.trim();
+                if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+                  setPlayStoreUrl(`https://${trimmed}`);
+                }
+              }}
+              placeholder="https://play.google.com/store/apps/details?id=..."
+              className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
+            />
+          </div>
+
+          {/* Apple App Store URL */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+                <Icon icon="solar:round-apple-bold" width={15} height={15} className="text-slate-800" />
+                <span>Apple App Store URL</span>
+              </label>
+              {appStoreUrl && (
+                <a
+                  href={appStoreUrl.startsWith("http") ? appStoreUrl : `https://${appStoreUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:underline"
+                >
+                  <span>Test Link</span>
+                  <Icon icon="solar:arrow-right-up-linear" width={13} height={13} />
+                </a>
+              )}
+            </div>
+            <input
+              type="text"
+              value={appStoreUrl}
+              onChange={(e) => setAppStoreUrl(e.target.value)}
+              onBlur={() => {
+                const trimmed = appStoreUrl.trim();
+                if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+                  setAppStoreUrl(`https://${trimmed}`);
+                }
+              }}
+              placeholder="https://apps.apple.com/app/id..."
               className="admin-input mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-500/15 focus:outline-none"
             />
           </div>
