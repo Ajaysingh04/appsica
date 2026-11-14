@@ -630,6 +630,19 @@ export default function ProjectForm({
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl space-y-7 pb-10 text-slate-900">
+      {/* Hidden Master / Screenshot file input (Unconditionally mounted so upload buttons always work) */}
+      <input
+        ref={masterFileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        disabled={uploading}
+        className="sr-only"
+        onChange={(e) => {
+          void onPickMasterFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
       {/* Status Alert Banner */}
       {message && (
         <div
@@ -1756,20 +1769,6 @@ export default function ProjectForm({
             </button>
           </div>
         </div>
-
-        {/* Hidden Master file input */}
-        <input
-          ref={masterFileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={uploading}
-          className="sr-only"
-          onChange={(e) => {
-            void onPickMasterFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
 
         {/* Upload Buttons & Drag Box */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
