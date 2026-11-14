@@ -204,7 +204,9 @@ export default function PortfolioGridClient({ projects }: PortfolioGridClientPro
                   ? "Customer App"
                   : singleAppRole === "delivery"
                   ? "Delivery App"
-                  : "Application";
+                  : appsWithLink[0]?.title && appsWithLink[0].title !== "App"
+                  ? appsWithLink[0].title
+                  : "Google Play";
 
               return (
                 <motion.div
