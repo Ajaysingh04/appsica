@@ -13,41 +13,37 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/favicon.svg",
-        type: "image/svg+xml",
-      },
-      {
-        url: "/favicon-dark-32x32.png",
+        url: "/favicon-dark-32x32.png?v=2",
         sizes: "32x32",
         type: "image/png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/favicon-light-32x32.png",
+        url: "/favicon-light-32x32.png?v=2",
         sizes: "32x32",
         type: "image/png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/favicon-dark.png",
+        url: "/favicon-dark.png?v=2",
         sizes: "512x512",
         type: "image/png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/favicon-light.png",
+        url: "/favicon-light.png?v=2",
         sizes: "512x512",
         type: "image/png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/favicon.ico",
+        url: "/favicon.ico?v=2",
         sizes: "any",
       },
     ],
-    shortcut: "/favicon.ico",
+    shortcut: "/favicon.ico?v=2",
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" },
     ],
   },
 };
@@ -60,6 +56,36 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-white text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900`}>
+        {/* Dynamic Favicon Script for Theme Sync */}
+        <Script
+          id="theme-favicon"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function updateFavicon() {
+                  try {
+                    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    var target = isDark ? '/favicon-dark-32x32.png?v=2' : '/favicon-light-32x32.png?v=2';
+                    var link = document.querySelector("link[data-dynamic-favicon='true']");
+                    if (!link) {
+                      link = document.createElement('link');
+                      link.rel = 'icon';
+                      link.type = 'image/png';
+                      link.setAttribute('data-dynamic-favicon', 'true');
+                      document.head.appendChild(link);
+                    }
+                    link.href = target;
+                  } catch(e) {}
+                }
+                updateFavicon();
+                if (window.matchMedia) {
+                  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+                }
+              })();
+            `,
+          }}
+        />
         {/* Meta Pixel Code */}
         <Script
           id="meta-pixel"
